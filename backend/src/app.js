@@ -1,5 +1,6 @@
 'use strict';
 
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -19,6 +20,9 @@ function createApp() {
   if (!env.isProduction) {
     app.use(morgan('dev'));
   }
+
+  // Exposicao dos PDFs de relatorio gerados (UC007).
+  app.use('/reports', express.static(path.join(process.cwd(), 'reports')));
 
   app.get('/health', (req, res) => {
     res.json({ status: 'ok', service: 'cuida-bem-backend', backend: env.dataBackend });

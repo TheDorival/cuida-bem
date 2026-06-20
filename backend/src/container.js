@@ -9,6 +9,8 @@ const GrupoService = require('./services/GrupoService');
 const AlertaService = require('./services/AlertaService');
 const RotinaService = require('./services/RotinaService');
 const DiarioService = require('./services/DiarioService');
+const RelatorioService = require('./services/RelatorioService');
+const PdfService = require('./services/PdfService');
 
 let container = null;
 
@@ -18,6 +20,7 @@ function getContainer() {
   const auditoria = new AuditoriaService(repos);
   const notificacao = getNotificacaoService();
   const alertaService = new AlertaService(repos, notificacao);
+  const pdfService = new PdfService();
 
   container = {
     repos,
@@ -27,6 +30,7 @@ function getContainer() {
     grupoService: new GrupoService(repos, auditoria),
     rotinaService: new RotinaService(repos, alertaService, auditoria),
     diarioService: new DiarioService(repos, notificacao, auditoria),
+    relatorioService: new RelatorioService(repos, pdfService, auditoria),
   };
   return container;
 }
