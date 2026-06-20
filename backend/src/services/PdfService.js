@@ -1,29 +1,28 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
 const PDFDocument = require('pdfkit');
 
-const DIR_RELATORIOS = path.join(process.cwd(), 'reports');
-
-// Servico de geracao de PDF do relatorio de evolucao (UC007).
-// Em producao, o arquivo pode ser enviado ao Firebase Storage; aqui e
-// persistido localmente e exposto via URL relativa.
+// Servico de geracao do PDF do relatorio de evolucao (UC007).
+// Gera o documento em memoria (Buffer) e delega a persistencia ao
+// IArmazenamentoService, mantendo a geracao independente do destino do arquivo.
 class PdfService {
-  constructor() {
-    if (!fs.existsSync(DIR_RELATORIOS)) fs.mkdirSync(DIR_RELATORIOS, { recursive: true });
+  constructor(armazenamento) {
+    this.armazenamento = armazenamento;
   }
 
   async gerarRelatorio({ relatorioId, grupo, periodoInicio, periodoFim, categorias, entradas }) {
-    const nomeArquivo = `${relatorioId}.pdf`;
-    const caminho = path.join(DIR_RELATORIOS, nomeArquivo);
+    const buffer = await this._montarPdf({ grupo, periodoInicio, periodoFim, categorias, entradas });
+    const { url } = await this.armazenamento.salvarPdf(`${relatorioId}.pdf`, buffer);
+    return { url };
+  }
 
-    await new Promise((resolve, reject) => {
+  _montarPdf({ grupo, periodoInicio, periodoFim, categorias, entradas }) {
+    return new Promise((resolve, reject) => {
       const doc = new PDFDocument({ size: 'A4', margin: 50 });
-      const stream = fs.createWriteStream(caminho);
-      stream.on('finish', resolve);
-      stream.on('error', reject);
-      doc.pipe(stream);
+      const chunks = [];
+      doc.on('data', (c) => chunks.push(c));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
 
       doc.fontSize(20).text('CuidaBem - Relatorio de Evolucao', { align: 'center' });
       doc.moveDown(0.5);
@@ -41,21 +40,15 @@ class PdfService {
       entradas.forEach((e) => {
         doc.fillColor('#000').fontSize(11).text(
           `${formatarDataHora(e.criadaEm)}  [${e.categoria}]${e.importante ? ' *' : ''}`,
-          { continued: false },
         );
         doc.fillColor('#333').fontSize(10).text(e.descricao, { indent: 12 });
         doc.fillColor('#888').fontSize(8).text(`autor: ${e.autorNome || e.autorId}`, { indent: 12 });
         doc.moveDown(0.5);
       });
 
-      if (!entradas.length) {
-        doc.fillColor('#888').text('Nenhum registro no periodo selecionado.');
-      }
-
+      if (!entradas.length) doc.fillColor('#888').text('Nenhum registro no periodo selecionado.');
       doc.end();
     });
-
-    return { caminho, url: `/reports/${nomeArquivo}` };
   }
 }
 

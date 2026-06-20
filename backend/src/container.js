@@ -11,6 +11,7 @@ const RotinaService = require('./services/RotinaService');
 const DiarioService = require('./services/DiarioService');
 const RelatorioService = require('./services/RelatorioService');
 const PdfService = require('./services/PdfService');
+const { getArmazenamentoService } = require('./services/armazenamento');
 
 let container = null;
 
@@ -20,7 +21,8 @@ function getContainer() {
   const auditoria = new AuditoriaService(repos);
   const notificacao = getNotificacaoService();
   const alertaService = new AlertaService(repos, notificacao);
-  const pdfService = new PdfService();
+  const armazenamento = getArmazenamentoService();
+  const pdfService = new PdfService(armazenamento);
 
   container = {
     repos,

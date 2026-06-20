@@ -26,7 +26,10 @@ function initFirebase() {
     credential = admin.credential.applicationDefault();
   }
 
-  app = admin.initializeApp({ credential });
+  app = admin.initializeApp({
+    credential,
+    storageBucket: env.firebase.storageBucket || undefined,
+  });
   firestore = admin.firestore();
   messaging = admin.messaging();
   return app;
