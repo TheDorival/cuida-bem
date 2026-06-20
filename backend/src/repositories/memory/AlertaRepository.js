@@ -19,6 +19,12 @@ class AlertaRepository extends IAlertaRepository {
     }
   }
 
+  async listarVencidos(agora = new Date()) {
+    return [...store.alertas.values()].filter(
+      (a) => a.ativo && a.proximoDisparo && new Date(a.proximoDisparo) <= agora,
+    );
+  }
+
   async salvar(alerta) {
     store.alertas.set(alerta.id, alerta);
     return alerta;

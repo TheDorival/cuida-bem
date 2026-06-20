@@ -28,6 +28,15 @@ class AlertaRepository extends IAlertaRepository {
     await batch.commit();
   }
 
+  async listarVencidos(agora = new Date()) {
+    const snap = await this.db
+      .collection(COL)
+      .where('ativo', '==', true)
+      .where('proximoDisparo', '<=', agora.toISOString())
+      .get();
+    return snap.docs.map((d) => new Alerta(d.data()));
+  }
+
   async salvar(alerta) {
     await this.db.collection(COL).doc(alerta.id).set({ ...alerta }, { merge: false });
     return alerta;

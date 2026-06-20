@@ -6,6 +6,7 @@ const grupoRoutes = require('./grupoRoutes');
 const rotinaRoutes = require('./rotinaRoutes');
 const diarioRoutes = require('./diarioRoutes');
 const relatorioRoutes = require('./relatorioRoutes');
+const jobRoutes = require('./jobRoutes');
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use('/grupos', autenticar, grupoRoutes);
 router.use('/grupos/:grupoId/rotinas', autenticar, rotinaRoutes);
 router.use('/grupos/:grupoId/diario', autenticar, diarioRoutes);
 router.use('/grupos/:grupoId/relatorios', autenticar, relatorioRoutes);
+router.use('/jobs', jobRoutes);
 
 module.exports = router;

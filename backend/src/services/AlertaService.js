@@ -34,6 +34,17 @@ class AlertaService {
     await this.repos.alertas.cancelarPorRotina(rotinaId);
   }
 
+  // Job: dispara todos os alertas vencidos e reagenda (executado por cron/Cloud Scheduler).
+  async dispararPendentes(agora = new Date()) {
+    const vencidos = await this.repos.alertas.listarVencidos(agora);
+    let total = 0;
+    for (const alerta of vencidos) {
+      const r = await this.dispararAlerta(alerta);
+      total += r.enviados || 0;
+    }
+    return { alertas: vencidos.length, notificacoesEnviadas: total };
+  }
+
   // Coleta os tokens FCM dos membros do grupo e dispara a notificacao.
   async dispararAlerta(alerta) {
     const grupo = await this.repos.grupos.buscarPorId(alerta.grupoId);
