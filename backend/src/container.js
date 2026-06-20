@@ -6,6 +6,8 @@ const { getRepositorios } = require('./repositories');
 const { getNotificacaoService } = require('./services/notificacao');
 const AuditoriaService = require('./services/AuditoriaService');
 const GrupoService = require('./services/GrupoService');
+const AlertaService = require('./services/AlertaService');
+const RotinaService = require('./services/RotinaService');
 
 let container = null;
 
@@ -14,12 +16,15 @@ function getContainer() {
   const repos = getRepositorios();
   const auditoria = new AuditoriaService(repos);
   const notificacao = getNotificacaoService();
+  const alertaService = new AlertaService(repos, notificacao);
 
   container = {
     repos,
     auditoria,
     notificacao,
+    alertaService,
     grupoService: new GrupoService(repos, auditoria),
+    rotinaService: new RotinaService(repos, alertaService, auditoria),
   };
   return container;
 }
