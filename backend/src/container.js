@@ -8,6 +8,7 @@ const AuditoriaService = require('./services/AuditoriaService');
 const GrupoService = require('./services/GrupoService');
 const AlertaService = require('./services/AlertaService');
 const RotinaService = require('./services/RotinaService');
+const DiarioService = require('./services/DiarioService');
 
 let container = null;
 
@@ -25,6 +26,7 @@ function getContainer() {
     alertaService,
     grupoService: new GrupoService(repos, auditoria),
     rotinaService: new RotinaService(repos, alertaService, auditoria),
+    diarioService: new DiarioService(repos, notificacao, auditoria),
   };
   return container;
 }

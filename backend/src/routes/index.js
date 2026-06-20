@@ -4,6 +4,7 @@ const { Router } = require('express');
 const { autenticar } = require('../middlewares/auth');
 const grupoRoutes = require('./grupoRoutes');
 const rotinaRoutes = require('./rotinaRoutes');
+const diarioRoutes = require('./diarioRoutes');
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.get('/', (req, res) => {
 // Todas as rotas de recurso exigem autenticacao (UC001).
 router.use('/grupos', autenticar, grupoRoutes);
 router.use('/grupos/:grupoId/rotinas', autenticar, rotinaRoutes);
+router.use('/grupos/:grupoId/diario', autenticar, diarioRoutes);
 
 module.exports = router;
