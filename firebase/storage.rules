@@ -1,0 +1,13 @@
+rules_version = '2';
+
+// CuidaBem - regras do Storage.
+// Os PDFs de relatorio (UC007) sao gravados pelo back-end (Admin SDK) e
+// disponibilizados por URL assinada com validade limitada. O acesso direto
+// de clientes e negado.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
