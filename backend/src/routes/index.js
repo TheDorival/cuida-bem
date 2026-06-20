@@ -1,6 +1,8 @@
 'use strict';
 
 const { Router } = require('express');
+const { autenticar } = require('../middlewares/auth');
+const grupoRoutes = require('./grupoRoutes');
 
 const router = Router();
 
@@ -11,5 +13,8 @@ router.get('/', (req, res) => {
     recursos: ['/grupos', '/rotinas', '/diario', '/relatorios'],
   });
 });
+
+// Todas as rotas de recurso exigem autenticacao (UC001).
+router.use('/grupos', autenticar, grupoRoutes);
 
 module.exports = router;
