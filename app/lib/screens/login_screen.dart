@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../config/app_mode.dart';
 import '../providers/session_provider.dart';
 
 /// Tela de acesso (UC001): login e cadastro via Firebase Auth.
@@ -43,6 +44,11 @@ class _LoginScreenState extends State<LoginScreen> {
               Icon(Icons.favorite, size: 72, color: Theme.of(context).colorScheme.primary),
               const SizedBox(height: 8),
               Text('CuidaBem', style: Theme.of(context).textTheme.headlineMedium),
+              if (kDemoMode)
+                const Padding(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Text('modo demonstracao - use qualquer e-mail e senha'),
+                ),
               const SizedBox(height: 24),
               if (_cadastro)
                 TextField(

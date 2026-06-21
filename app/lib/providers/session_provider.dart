@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../services/api_client.dart';
+import '../services/fake_api_client.dart';
 import '../services/auth_service.dart';
 import '../services/grupo_service.dart';
 import '../services/rotina_service.dart';
@@ -7,39 +8,56 @@ import '../services/diario_service.dart';
 import '../services/relatorio_service.dart';
 
 /// Estado de sessao do usuario (Controller do MVC do cliente).
-/// Autentica via Firebase Auth (UC001) e injeta o ID token no ApiClient.
+/// Em producao autentica via Firebase Auth (UC001) e injeta o ID token no
+/// ApiClient. Em modo demonstracao usa um FakeApiClient e dispensa o Firebase.
 class SessionProvider extends ChangeNotifier {
-  final ApiClient api = ApiClient();
-  final AuthService auth = AuthService();
+  final bool demo;
+  late final ApiClient api;
   late final GrupoService grupos = GrupoService(api);
   late final RotinaService rotinas = RotinaService(api);
   late final DiarioService diario = DiarioService(api);
   late final RelatorioService relatorios = RelatorioService(api);
 
+  AuthService? _auth;
+  AuthService get auth => _auth ??= AuthService();
+
   bool _autenticado = false;
   bool get autenticado => _autenticado;
   String? erro;
 
+  SessionProvider({this.demo = false, ApiClient? apiClient}) {
+    api = apiClient ?? (demo ? FakeApiClient() : ApiClient());
+  }
+
   /// Restaura a sessao se ja houver usuario autenticado (app reaberto).
   Future<void> restaurar() async {
-    if (auth.usuarioAtual != null) {
-      await _aplicarToken();
-    }
+    if (demo) return;
+    if (auth.usuarioAtual != null) await _aplicarToken();
   }
 
   Future<bool> entrar(String email, String senha) async {
+    if (demo) return _entrarDemo();
     return _executar(() => auth.entrar(email, senha));
   }
 
   Future<bool> cadastrar(String nome, String email, String senha) async {
+    if (demo) return _entrarDemo();
     return _executar(() => auth.cadastrar(nome, email, senha));
   }
 
   Future<void> sair() async {
-    await auth.sair();
+    if (!demo) await auth.sair();
     api.definirToken(null);
     _autenticado = false;
     notifyListeners();
+  }
+
+  bool _entrarDemo() {
+    api.definirToken('demo');
+    _autenticado = true;
+    erro = null;
+    notifyListeners();
+    return true;
   }
 
   Future<bool> _executar(Future<Object?> Function() acao) async {
