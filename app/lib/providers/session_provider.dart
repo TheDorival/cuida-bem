@@ -23,6 +23,7 @@ class SessionProvider extends ChangeNotifier {
   AuthService get auth => _auth ??= AuthService();
 
   bool _autenticado = false;
+  bool _pushConfigurado = false;
   bool get autenticado => _autenticado;
 
   /// Id do usuario atual (uid do Firebase em producao; 'demo-user' no modo demo).
@@ -89,13 +90,23 @@ class SessionProvider extends ChangeNotifier {
   // Registra o token FCM do dispositivo no backend (somente producao).
   Future<void> _registrarPush() async {
     if (demo) return;
+    final push = NotificacoesPush();
     try {
-      final tokenPush = await NotificacoesPush().obterToken();
+      final tokenPush = await push.obterToken();
       if (tokenPush != null) {
         await api.post('/usuarios/me/fcm-token', {'token': tokenPush});
       }
     } catch (_) {
       // falha em push nao deve impedir o uso do app
+    }
+    // Renova o registro quando o FCM rotaciona o token (uma unica vez).
+    if (!_pushConfigurado) {
+      _pushConfigurado = true;
+      push.aoAtualizarToken.listen((novo) async {
+        try {
+          await api.post('/usuarios/me/fcm-token', {'token': novo});
+        } catch (_) {}
+      });
     }
   }
 

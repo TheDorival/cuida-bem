@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'firebase_options.dart';
 import 'config/app_mode.dart';
@@ -13,6 +14,12 @@ import 'providers/relatorio_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/grupos_screen.dart';
 
+// Handler de mensagens FCM recebidas com o app em segundo plano (UC006).
+@pragma('vm:entry-point')
+Future<void> _fcmSegundoPlano(RemoteMessage message) async {
+  // O sistema exibe a notificacao automaticamente; nada a fazer aqui.
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('pt_BR', null);
@@ -23,6 +30,7 @@ Future<void> main() async {
     session = SessionProvider(demo: true);
   } else {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    FirebaseMessaging.onBackgroundMessage(_fcmSegundoPlano);
     session = SessionProvider();
     await session.restaurar();
   }
