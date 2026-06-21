@@ -8,6 +8,7 @@ import '../providers/diario_provider.dart';
 import '../widgets/estado_vazio.dart';
 import '../widgets/visao_estado.dart';
 import '../widgets/faixa_resumo.dart';
+import '../widgets/banner_conexao.dart';
 
 /// Tela do Diario de Saude (UC004), com filtros por categoria e periodo (FA01/RF005).
 class DiarioScreen extends StatefulWidget {
@@ -120,6 +121,8 @@ class _DiarioScreenState extends State<DiarioScreen> {
       ),
       body: Column(
         children: [
+          if (context.watch<DiarioProvider>().erro != null && context.watch<DiarioProvider>().entradas.isNotEmpty)
+            BannerConexao(aoTentar: _aplicar),
           FaixaResumo(itens: [
             ItemResumo(
                 icone: Icons.menu_book,
@@ -136,7 +139,7 @@ class _DiarioScreenState extends State<DiarioScreen> {
           Expanded(
             child: prov.carregando
                 ? const Carregando()
-                : prov.erro != null
+                : (prov.erro != null && prov.entradas.isEmpty)
                     ? ErroView(mensagem: prov.erro!, aoTentar: _aplicar)
                     : prov.entradas.isEmpty
                         ? EstadoVazio(

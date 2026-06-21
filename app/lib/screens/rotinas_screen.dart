@@ -7,8 +7,9 @@ import '../providers/rotina_provider.dart';
 import '../widgets/estado_vazio.dart';
 import '../widgets/visao_estado.dart';
 import '../widgets/faixa_resumo.dart';
+import '../widgets/banner_conexao.dart';
 
-/// Tela de Rotinas de Cuidado (UC003), com filtro por tipo (FA01).
+/// Tela de Rotinas de Cuidado (UC003): cadastrar, editar, concluir e desativar.
 class RotinasScreen extends StatefulWidget {
   final Grupo grupo;
   const RotinasScreen({super.key, required this.grupo});
@@ -25,17 +26,20 @@ class _RotinasScreenState extends State<RotinasScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => context.read<RotinaProvider>().carregar(widget.grupo.id));
   }
 
-  Future<void> _nova() async {
-    final descricao = TextEditingController();
-    final horario = TextEditingController(text: '08:00');
-    TipoRotina tipo = TipoRotina.medicacao;
-    FrequenciaRotina freq = FrequenciaRotina.diaria;
+  // Formulario unico para criar (FA padrao) e editar (FA01) rotina.
+  Future<void> _form({dynamic existente}) async {
+    final editando = existente != null;
+    final descricao = TextEditingController(text: editando ? existente.descricao : '');
+    final horario = TextEditingController(text: editando ? existente.horario : '08:00');
+    TipoRotina tipo = editando ? enumDaApi(TipoRotina.values, existente.tipo) : TipoRotina.medicacao;
+    FrequenciaRotina freq =
+        editando ? enumDaApi(FrequenciaRotina.values, existente.frequencia) : FrequenciaRotina.diaria;
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setLocal) => AlertDialog(
-          title: const Text('Nova rotina'),
+          title: Text(editando ? 'Editar rotina' : 'Nova rotina'),
           content: SingleChildScrollView(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               DropdownButtonFormField<TipoRotina>(
@@ -70,17 +74,36 @@ class _RotinasScreenState extends State<RotinasScreen> {
     );
 
     if (ok == true && mounted) {
-      final sucesso = await context.read<RotinaProvider>().criar(widget.grupo.id, {
+      final dados = {
         'tipo': enumParaApi(tipo),
         'descricao': descricao.text.trim(),
         'horario': horario.text.trim(),
         'frequencia': enumParaApi(freq),
-      });
+      };
+      final prov = context.read<RotinaProvider>();
+      final sucesso = editando
+          ? await prov.editar(widget.grupo.id, existente.id, dados)
+          : await prov.criar(widget.grupo.id, dados);
       if (!sucesso && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.read<RotinaProvider>().erro ?? 'Falha ao criar rotina')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(prov.erro ?? 'Falha ao salvar rotina')));
       }
+    }
+  }
+
+  Future<void> _desativar(dynamic r) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Desativar rotina'),
+        content: const Text('Os alertas futuros serao cancelados, mas o historico de conclusoes e mantido. Confirmar?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Desativar')),
+        ],
+      ),
+    );
+    if (ok == true && mounted) {
+      await context.read<RotinaProvider>().desativar(widget.grupo.id, r.id);
     }
   }
 
@@ -91,12 +114,14 @@ class _RotinasScreenState extends State<RotinasScreen> {
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _nova,
+        onPressed: () => _form(),
         icon: const Icon(Icons.add),
         label: const Text('Nova rotina'),
       ),
       body: Column(
         children: [
+          if (context.watch<RotinaProvider>().erro != null && context.watch<RotinaProvider>().rotinas.isNotEmpty)
+            BannerConexao(aoTentar: () => context.read<RotinaProvider>().carregar(widget.grupo.id)),
           FaixaResumo(itens: [
             ItemResumo(
                 icone: Icons.schedule,
@@ -113,7 +138,7 @@ class _RotinasScreenState extends State<RotinasScreen> {
           Expanded(
             child: prov.carregando
                 ? const Carregando()
-                : prov.erro != null
+                : (prov.erro != null && lista.isEmpty)
                     ? ErroView(mensagem: prov.erro!, aoTentar: () => prov.carregar(widget.grupo.id))
                     : lista.isEmpty
                         ? EstadoVazio(
@@ -121,7 +146,7 @@ class _RotinasScreenState extends State<RotinasScreen> {
                             titulo: 'Nenhuma rotina',
                             descricao: 'Cadastre rotinas de medicacao, alimentacao e higiene para receber lembretes.',
                             acaoRotulo: 'Nova rotina',
-                            aoTocar: _nova,
+                            aoTocar: () => _form(),
                           )
                         : ListView(children: lista.map(_card).toList()),
           ),
@@ -138,8 +163,8 @@ class _RotinasScreenState extends State<RotinasScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         children: [
           _chip('Todas', _tipoFiltro == null, () => setState(() => _tipoFiltro = null)),
-          ...tiposRotina.entries.map((e) => _chip(e.value.rotulo, _tipoFiltro == e.key,
-              () => setState(() => _tipoFiltro = e.key))),
+          ...tiposRotina.entries
+              .map((e) => _chip(e.value.rotulo, _tipoFiltro == e.key, () => setState(() => _tipoFiltro = e.key))),
         ],
       ),
     );
@@ -171,6 +196,17 @@ class _RotinasScreenState extends State<RotinasScreen> {
                 tooltip: 'Concluir',
                 onPressed: () => context.read<RotinaProvider>().concluir(widget.grupo.id, r.id),
               ),
+            PopupMenuButton<String>(
+              onSelected: (v) {
+                if (v == 'editar') _form(existente: r);
+                if (v == 'desativar') _desativar(r);
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'editar', child: Row(children: [Icon(Icons.edit), SizedBox(width: 8), Text('Editar')])),
+                PopupMenuItem(
+                    value: 'desativar', child: Row(children: [Icon(Icons.block), SizedBox(width: 8), Text('Desativar')])),
+              ],
+            ),
           ],
         ),
       ),

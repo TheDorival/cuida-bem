@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../config/app_mode.dart';
 import '../config/rotulos.dart';
 import '../models/grupo.dart';
 import '../providers/relatorio_provider.dart';
 import '../widgets/estado_vazio.dart';
 import '../widgets/visao_estado.dart';
 import '../widgets/faixa_resumo.dart';
+import '../widgets/banner_conexao.dart';
 
 /// Tela de Relatorios de Evolucao (UC007), com selecao de periodo e categorias (FA01).
 class RelatoriosScreen extends StatefulWidget {
@@ -110,6 +113,8 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
       ),
       body: Column(
         children: [
+          if (prov.erro != null && prov.relatorios.isNotEmpty)
+            BannerConexao(aoTentar: () => prov.carregar(widget.grupo.id)),
           if (prov.relatorios.isNotEmpty)
             FaixaResumo(itens: [
               ItemResumo(
@@ -121,7 +126,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
           Expanded(
             child: prov.carregando
                 ? const Carregando()
-          : prov.erro != null
+          : (prov.erro != null && prov.relatorios.isEmpty)
               ? ErroView(mensagem: prov.erro!, aoTentar: () => prov.carregar(widget.grupo.id))
               : prov.relatorios.isEmpty
                   ? EstadoVazio(
@@ -138,6 +143,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
                             : r.categorias.map((c) => visualCategoria(c).rotulo).join(', ');
                         return Card(
                           child: ListTile(
+                            onTap: () => _abrirPdf(r.urlPdf),
                             leading: CircleAvatar(
                               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                               child: const Icon(Icons.picture_as_pdf),
@@ -145,7 +151,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
                             title: Text('${_fmt.format(r.periodoInicio)} a ${_fmt.format(r.periodoFim)}'),
                             subtitle: Text('Versao ${r.versao} - ${r.totalEntradas} registros\n$cats'),
                             isThreeLine: true,
-                            trailing: const Icon(Icons.download),
+                            trailing: const Icon(Icons.open_in_new),
                           ),
                         );
                       }).toList(),
@@ -154,5 +160,23 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _abrirPdf(String? url) async {
+    if (url == null || url.isEmpty) return;
+    if (kDemoMode || url.startsWith('demo://')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No app publicado, o PDF abre/compartilha aqui.')),
+      );
+      return;
+    }
+    final uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nao foi possivel abrir o relatorio.')),
+        );
+      }
+    }
   }
 }

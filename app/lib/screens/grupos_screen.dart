@@ -4,6 +4,7 @@ import '../providers/grupo_provider.dart';
 import '../providers/session_provider.dart';
 import '../widgets/estado_vazio.dart';
 import '../widgets/visao_estado.dart';
+import '../widgets/banner_conexao.dart';
 import 'grupo_home_screen.dart';
 
 /// Tela inicial pos-login: saudacao e grupos de cuidado do usuario (UC002).
@@ -23,6 +24,31 @@ class _GruposScreenState extends State<GruposScreen> {
   Future<void> _sair() async {
     await context.read<SessionProvider>().sair();
     if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+  }
+
+  Future<void> _entrarConvite() async {
+    final token = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Entrar com convite'),
+        content: TextField(
+          controller: token,
+          decoration: const InputDecoration(labelText: 'Codigo do convite', prefixIcon: Icon(Icons.vpn_key)),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Entrar')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final prov = context.read<GrupoProvider>();
+    final sucesso = await prov.aceitarConvite(token.text);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(sucesso ? 'Voce entrou no grupo!' : (prov.erro ?? 'Convite invalido'))),
+    );
   }
 
   Future<void> _novoGrupo() async {
@@ -68,7 +94,7 @@ class _GruposScreenState extends State<GruposScreen> {
             Expanded(
               child: prov.carregando
                   ? const Carregando()
-                  : prov.erro != null
+                  : (prov.erro != null && prov.grupos.isEmpty)
                       ? ErroView(mensagem: prov.erro!, aoTentar: () => prov.carregar())
                       : prov.grupos.isEmpty
                           ? EstadoVazio(
@@ -83,6 +109,7 @@ class _GruposScreenState extends State<GruposScreen> {
                               child: ListView(
                                 padding: const EdgeInsets.fromLTRB(0, 8, 0, 96),
                                 children: [
+                                  if (prov.erro != null) BannerConexao(aoTentar: () => prov.carregar()),
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
                                     child: Text('Seus grupos',
@@ -120,6 +147,11 @@ class _GruposScreenState extends State<GruposScreen> {
               const SizedBox(width: 8),
               const Text('CuidaBem', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
               const Spacer(),
+              IconButton(
+                onPressed: _entrarConvite,
+                icon: const Icon(Icons.vpn_key, color: Colors.white),
+                tooltip: 'Entrar com convite',
+              ),
               IconButton(
                 onPressed: _sair,
                 icon: const Icon(Icons.logout, color: Colors.white),
@@ -178,12 +210,4 @@ class _GruposScreenState extends State<GruposScreen> {
                     ]),
                   ],
                 ),
-              ),
-              Icon(Icons.chevron_right, color: cor.outline),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+         
