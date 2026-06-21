@@ -13,7 +13,6 @@ class CuidaBemTheme {
     return base.copyWith(
       scaffoldBackgroundColor: const Color(0xFFF6F8F7),
       visualDensity: VisualDensity.comfortable,
-      textTheme: base.textTheme.apply(fontSizeFactor: 1.08),
       appBarTheme: AppBarTheme(
         centerTitle: false,
         backgroundColor: esquema.primary,

@@ -47,6 +47,15 @@ class CuidaBemApp extends StatelessWidget {
         title: 'CuidaBem',
         debugShowCheckedModeBanner: false,
         theme: CuidaBemTheme.light,
+        builder: (context, child) {
+          final mq = MediaQuery.of(context);
+          return MediaQuery(
+            data: mq.copyWith(
+              textScaler: mq.textScaler.clamp(minScaleFactor: 1.05, maxScaleFactor: 1.4),
+            ),
+            child: child!,
+          );
+        },
         home: const _Gate(),
       ),
     );
