@@ -16,13 +16,11 @@ class RotinaService {
     return Rotina.fromJson((data as Map<String, dynamic>)['rotina'] as Map<String, dynamic>);
   }
 
-  Future<Rotina> concluir(String grupoId, String rotinaId) async {
-    final data = await api.post('/grupos/$grupoId/rotinas/$rotinaId/concluir');
+  Future<Rotina> editar(String grupoId, String rotinaId, Map<String, dynamic> dados) async {
+    final data = await api.patch('/grupos/$grupoId/rotinas/$rotinaId', dados);
     return Rotina.fromJson(data as Map<String, dynamic>);
   }
 
-  Future<Rotina> desativar(String grupoId, String rotinaId) async {
-    final data = await api.post('/grupos/$grupoId/rotinas/$rotinaId/desativar');
-    return Rotina.fromJson(data as Map<String, dynamic>);
-  }
-}
+  Future<Rotina> concluir(String grupoId, String rotinaId) async {
+    final data = await api.post('/grupos/$grupoId/rotinas/$rotinaId/concluir');
+    return Rotina.fromJson(data as Map<St

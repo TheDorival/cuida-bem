@@ -37,18 +37,18 @@ class RotinaProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> concluir(String grupoId, String rotinaId) async {
+  Future<bool> editar(String grupoId, String rotinaId, Map<String, dynamic> dados) async {
     try {
-      await service.concluir(grupoId, rotinaId);
+      await service.editar(grupoId, rotinaId, dados);
       await carregar(grupoId);
+      return true;
     } catch (e) {
       erro = e.toString();
       notifyListeners();
+      return false;
     }
   }
 
-  Future<void> desativar(String grupoId, String rotinaId) async {
-    await service.desativar(grupoId, rotinaId);
-    await carregar(grupoId);
-  }
-}
+  Future<void> concluir(String grupoId, String rotinaId) async {
+    try {
+    
