@@ -11,12 +11,21 @@ class DiarioProvider extends ChangeNotifier {
   bool carregando = false;
   String? erro;
 
-  Future<void> carregar(String grupoId, {List<String>? categorias}) async {
+  List<String> categoriasFiltro = [];
+  DateTime? dataInicio;
+  DateTime? dataFim;
+
+  Future<void> carregar(String grupoId,
+      {List<String>? categorias, DateTime? inicio, DateTime? fim}) async {
+    if (categorias != null) categoriasFiltro = categorias;
+    dataInicio = inicio;
+    dataFim = fim;
     carregando = true;
     erro = null;
     notifyListeners();
     try {
-      entradas = await service.listar(grupoId, categorias: categorias);
+      entradas = await service.listar(grupoId,
+          categorias: categoriasFiltro, dataInicio: dataInicio, dataFim: dataFim);
     } catch (e) {
       erro = e.toString();
     } finally {

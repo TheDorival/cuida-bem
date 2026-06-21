@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/grupo_provider.dart';
+import '../providers/session_provider.dart';
+import '../widgets/estado_vazio.dart';
+import '../widgets/visao_estado.dart';
 import 'grupo_home_screen.dart';
 
 /// Lista de grupos do usuario e criacao de novo grupo (UC002).
@@ -17,6 +20,11 @@ class _GruposScreenState extends State<GruposScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => context.read<GrupoProvider>().carregar());
   }
 
+  Future<void> _sair() async {
+    await context.read<SessionProvider>().sair();
+    if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+  }
+
   Future<void> _novoGrupo() async {
     final nome = TextEditingController();
     final idoso = TextEditingController();
@@ -26,6 +34,7 @@ class _GruposScreenState extends State<GruposScreen> {
         title: const Text('Novo grupo de cuidado'),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           TextField(controller: nome, decoration: const InputDecoration(labelText: 'Nome do grupo')),
+          const SizedBox(height: 12),
           TextField(controller: idoso, decoration: const InputDecoration(labelText: 'Nome do idoso')),
         ]),
         actions: [
@@ -43,27 +52,54 @@ class _GruposScreenState extends State<GruposScreen> {
   Widget build(BuildContext context) {
     final prov = context.watch<GrupoProvider>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Meus grupos')),
-      floatingActionButton: FloatingActionButton(onPressed: _novoGrupo, child: const Icon(Icons.add)),
+      appBar: AppBar(
+        title: const Text('Meus grupos'),
+        actions: [
+          IconButton(onPressed: _sair, icon: const Icon(Icons.logout), tooltip: 'Sair'),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _novoGrupo,
+        icon: const Icon(Icons.add),
+        label: const Text('Novo grupo'),
+      ),
       body: prov.carregando
-          ? const Center(child: CircularProgressIndicator())
-          : prov.grupos.isEmpty
-              ? const Center(child: Text('Nenhum grupo. Toque em + para criar.'))
-              : ListView(
-                  children: prov.grupos
-                      .map((g) => ListTile(
-                            leading: const Icon(Icons.groups),
-                            title: Text(g.nome),
-                            subtitle: Text('Idoso: ${g.nomeIdoso}  -  ${g.membros.length} membro(s)'),
-                            onTap: () {
-                              prov.selecionar(g);
-                              Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => GrupoHomeScreen(grupo: g)),
-                              );
-                            },
-                          ))
-                      .toList(),
-                ),
+          ? const Carregando()
+          : prov.erro != null
+              ? ErroView(mensagem: prov.erro!, aoTentar: () => prov.carregar())
+              : prov.grupos.isEmpty
+                  ? EstadoVazio(
+                      icone: Icons.groups,
+                      titulo: 'Nenhum grupo ainda',
+                      descricao: 'Crie um grupo de cuidado para organizar rotinas, diario e relatorios do idoso.',
+                      acaoRotulo: 'Criar grupo',
+                      aoTocar: _novoGrupo,
+                    )
+                  : RefreshIndicator(
+                      onRefresh: () => prov.carregar(),
+                      child: ListView(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        children: prov.grupos.map((g) {
+                          return Card(
+                            child: ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                                child: const Icon(Icons.elderly),
+                              ),
+                              title: Text(g.nome, style: const TextStyle(fontWeight: FontWeight.w600)),
+                              subtitle: Text('Idoso: ${g.nomeIdoso}  -  ${g.membros.length} membro(s)'),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () {
+                                context.read<GrupoProvider>().selecionar(g);
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (_) => GrupoHomeScreen(grupo: g)),
+                                );
+                              },
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
     );
   }
 }

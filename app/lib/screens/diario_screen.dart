@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../config/rotulos.dart';
 import '../models/grupo.dart';
 import '../models/enums.dart';
 import '../providers/diario_provider.dart';
+import '../widgets/estado_vazio.dart';
+import '../widgets/visao_estado.dart';
 
-/// Tela do Diario de Saude (UC004).
+/// Tela do Diario de Saude (UC004), com filtros por categoria e periodo (FA01/RF005).
 class DiarioScreen extends StatefulWidget {
   final Grupo grupo;
   const DiarioScreen({super.key, required this.grupo});
@@ -15,13 +18,36 @@ class DiarioScreen extends StatefulWidget {
 
 class _DiarioScreenState extends State<DiarioScreen> {
   final _fmt = DateFormat('dd/MM/yyyy HH:mm');
+  final Set<String> _categorias = {};
+  DateTimeRange? _periodo;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => context.read<DiarioProvider>().carregar(widget.grupo.id),
+    WidgetsBinding.instance.addPostFrameCallback((_) => _aplicar());
+  }
+
+  void _aplicar() {
+    context.read<DiarioProvider>().carregar(
+          widget.grupo.id,
+          categorias: _categorias.toList(),
+          inicio: _periodo?.start,
+          fim: _periodo?.end,
+        );
+  }
+
+  Future<void> _selecionarPeriodo() async {
+    final agora = DateTime.now();
+    final r = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(agora.year - 2),
+      lastDate: agora,
+      initialDateRange: _periodo,
     );
+    if (r != null) {
+      setState(() => _periodo = r);
+      _aplicar();
+    }
   }
 
   Future<void> _nova() async {
@@ -34,27 +60,32 @@ class _DiarioScreenState extends State<DiarioScreen> {
       builder: (_) => StatefulBuilder(
         builder: (context, setLocal) => AlertDialog(
           title: const Text('Nova entrada'),
-          content: Column(mainAxisSize: MainAxisSize.min, children: [
-            DropdownButton<CategoriaDiario>(
-              value: categoria,
-              isExpanded: true,
-              items: CategoriaDiario.values
-                  .map((c) => DropdownMenuItem(value: c, child: Text(enumParaApi(c))))
-                  .toList(),
-              onChanged: (v) => setLocal(() => categoria = v!),
-            ),
-            TextField(
-              controller: descricao,
-              maxLength: 500,
-              maxLines: 3,
-              decoration: const InputDecoration(labelText: 'Descricao'),
-            ),
-            SwitchListTile(
-              value: importante,
-              onChanged: (v) => setLocal(() => importante = v),
-              title: const Text('Marcar como importante'),
-            ),
-          ]),
+          content: SingleChildScrollView(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              DropdownButtonFormField<CategoriaDiario>(
+                value: categoria,
+                decoration: const InputDecoration(labelText: 'Categoria'),
+                items: CategoriaDiario.values
+                    .map((c) => DropdownMenuItem(value: c, child: Text(visualCategoria(enumParaApi(c)).rotulo)))
+                    .toList(),
+                onChanged: (v) => setLocal(() => categoria = v!),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: descricao,
+                maxLength: 500,
+                maxLines: 3,
+                decoration: const InputDecoration(labelText: 'Descricao'),
+              ),
+              SwitchListTile(
+                value: importante,
+                onChanged: (v) => setLocal(() => importante = v),
+                title: const Text('Importante'),
+                subtitle: const Text('Notifica todos os membros'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ]),
+          ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
             FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Salvar')),
@@ -70,8 +101,9 @@ class _DiarioScreenState extends State<DiarioScreen> {
         'importante': importante,
       });
       if (!sucesso && mounted) {
-        final erro = context.read<DiarioProvider>().erro ?? 'Falha ao registrar';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(erro)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.read<DiarioProvider>().erro ?? 'Falha ao registrar')),
+        );
       }
     }
   }
@@ -80,21 +112,97 @@ class _DiarioScreenState extends State<DiarioScreen> {
   Widget build(BuildContext context) {
     final prov = context.watch<DiarioProvider>();
     return Scaffold(
-      floatingActionButton: FloatingActionButton(onPressed: _nova, child: const Icon(Icons.add)),
-      body: prov.carregando
-          ? const Center(child: CircularProgressIndicator())
-          : prov.entradas.isEmpty
-              ? const Center(child: Text('Diario vazio.'))
-              : ListView(
-                  children: prov.entradas.map((e) {
-                    return ListTile(
-                      leading: Icon(e.importante ? Icons.priority_high : Icons.notes,
-                          color: e.importante ? Colors.orange : null),
-                      title: Text(e.descricao),
-                      subtitle: Text('${e.categoria} - ${_fmt.format(e.criadaEm)} - ${e.autorNome ?? ''}'),
-                    );
-                  }).toList(),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _nova,
+        icon: const Icon(Icons.add),
+        label: const Text('Nova entrada'),
+      ),
+      body: Column(
+        children: [
+          _filtros(),
+          Expanded(
+            child: prov.carregando
+                ? const Carregando()
+                : prov.erro != null
+                    ? ErroView(mensagem: prov.erro!, aoTentar: _aplicar)
+                    : prov.entradas.isEmpty
+                        ? EstadoVazio(
+                            icone: Icons.menu_book,
+                            titulo: 'Diario vazio',
+                            descricao: 'Registre saude, humor, alimentacao e ocorrencias do dia a dia.',
+                            acaoRotulo: 'Nova entrada',
+                            aoTocar: _nova,
+                          )
+                        : ListView(children: prov.entradas.reversed.map(_card).toList()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _filtros() {
+    return Column(
+      children: [
+        SizedBox(
+          height: 56,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            children: categorias.entries.map((e) {
+              final ativo = _categorias.contains(e.key);
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  avatar: Icon(e.value.icone, size: 18, color: e.value.cor),
+                  label: Text(e.value.rotulo),
+                  selected: ativo,
+                  onSelected: (v) {
+                    setState(() => v ? _categorias.add(e.key) : _categorias.remove(e.key));
+                    _aplicar();
+                  },
                 ),
+              );
+            }).toList(),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _selecionarPeriodo,
+                  icon: const Icon(Icons.date_range),
+                  label: Text(_periodo == null
+                      ? 'Filtrar por periodo'
+                      : '${DateFormat('dd/MM').format(_periodo!.start)} - ${DateFormat('dd/MM').format(_periodo!.end)}'),
+                ),
+              ),
+              if (_periodo != null)
+                IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    setState(() => _periodo = null);
+                    _aplicar();
+                  },
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _card(dynamic e) {
+    final v = visualCategoria(e.categoria);
+    return Card(
+      child: ListTile(
+        leading: CircleAvatar(backgroundColor: v.cor.withValues(alpha: 0.15), child: Icon(v.icone, color: v.cor)),
+        title: Text(e.descricao),
+        subtitle: Text('${v.rotulo} - ${_fmt.format(e.criadaEm)} - ${e.autorNome ?? ''}'),
+        trailing: e.importante ? const Icon(Icons.priority_high, color: Color(0xFFD9A407)) : null,
+        isThreeLine: true,
+      ),
     );
   }
 }
