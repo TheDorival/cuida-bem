@@ -90,6 +90,25 @@ class FakeApiClient extends ApiClient {
     final b = body ?? {};
     final s = _segmentos(path);
 
+    // grupos/convites/:token/aceitar -> ingressa em um novo grupo de exemplo
+    if (s.length == 4 && s[0] == 'grupos' && s[1] == 'convites' && s[3] == 'aceitar') {
+      final g = {
+        'id': _novoId('grp'),
+        'nome': 'Grupo do convite',
+        'nomeIdoso': 'Dona Maria',
+        'cuidadorPrincipalId': 'outro-usuario',
+        'membros': [
+          {'usuarioId': 'outro-usuario', 'perfil': 'CUIDADOR_PRINCIPAL'},
+          {'usuarioId': 'demo-user', 'perfil': 'CUIDADOR_AUXILIAR'},
+        ],
+      };
+      _grupos.add(g);
+      _rotinas[g['id'] as String] = [];
+      _diario[g['id'] as String] = [];
+      _relatorios[g['id'] as String] = [];
+      return _resp(g);
+    }
+
     if (s.length == 1 && s[0] == 'grupos') {
       final g = {
         'id': _novoId('grp'),

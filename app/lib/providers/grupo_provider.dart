@@ -60,9 +60,9 @@ class GrupoProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> removerMembro(String grupoId, String usuarioId) async {
+  Future<bool> aceitarConvite(String token) async {
     try {
-      await service.removerMembro(grupoId, usuarioId);
+      await service.aceitarConvite(token.trim());
       await carregar();
       return true;
     } catch (e) {
@@ -72,14 +72,9 @@ class GrupoProvider extends ChangeNotifier {
     }
   }
 
-  void _inicio() {
-    carregando = true;
-    erro = null;
-    notifyListeners();
-  }
-
-  void _fim() {
-    carregando = false;
-    notifyListeners();
-  }
-}
+  Future<bool> removerMembro(String grupoId, String usuarioId) async {
+    try {
+      await service.removerMembro(grupoId, usuarioId);
+      await carregar();
+      return true;
+ 
