@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "807538238653",
+    "project_id": "cuida-bem-5dcab",
+    "storage_bucket": "cuida-bem-5dcab.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:807538238653:android:c59b98972d0bb64dd503d4",
+        "android_client_info": {
+          "package_name": "com.example.cuida_bem"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDb1v2YRdR66_aUX0aa2alV0HppAx2VYzU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
