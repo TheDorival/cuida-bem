@@ -48,3 +48,10 @@ app.*.map.json
 
 # Web
 lib/generated_plugin_registrant.dart
+.fuse_hidden*
+
+# Generated plugin registrants (desktop)
+**/generated_plugin_registrant.cc
+**/generated_plugin_registrant.h
+**/generated_plugins.cmake
+**/GeneratedPluginRegistrant.swift
