@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
 import '../services/api_client.dart';
 import '../services/fake_api_client.dart';
 import '../services/auth_service.dart';
@@ -111,12 +112,11 @@ class SessionProvider extends ChangeNotifier {
   }
 
   String _traduzir(Object e) {
-    final s = e.toString();
-    if (s.contains('user-not-found') || s.contains('wrong-password') || s.contains('invalid-credential')) {
-      return 'E-mail ou senha invalidos';
-    }
-    if (s.contains('email-already-in-use')) return 'E-mail ja cadastrado';
-    if (s.contains('weak-password')) return 'Senha muito fraca (minimo 6 caracteres)';
-    return 'Falha na autenticacao';
-  }
-}
+    if (e is FirebaseAuthException) {
+      switch (e.code) {
+        case 'invalid-email':
+          return 'E-mail invalido. Verifique o formato (ex.: nome@email.com)';
+        case 'user-not-found':
+          return 'Nao encontramos uma conta com esse e-mail';
+        case 'wrong-password':
+        case 'i

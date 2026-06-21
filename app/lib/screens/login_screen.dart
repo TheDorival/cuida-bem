@@ -14,6 +14,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _mostrarOnboarding = true;
+  final _formKey = GlobalKey<FormState>();
   final _nome = TextEditingController();
   final _email = TextEditingController();
   final _senha = TextEditingController();
@@ -28,7 +29,23 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  String? _validarEmail(String? v) {
+    final email = (v ?? '').trim();
+    if (email.isEmpty) return 'Informe seu e-mail';
+    final regex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    if (!regex.hasMatch(email)) return 'E-mail invalido (ex.: nome@email.com)';
+    return null;
+  }
+
+  String? _validarSenha(String? v) {
+    final senha = v ?? '';
+    if (senha.isEmpty) return 'Informe a senha';
+    if (_cadastro && senha.length < 6) return 'A senha deve ter ao menos 6 caracteres';
+    return null;
+  }
+
   Future<void> _submeter() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _carregando = true);
     final session = context.read<SessionProvider>();
     final ok = _cadastro
@@ -82,7 +99,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 margin: EdgeInsets.zero,
                 child: Padding(
                   padding: const EdgeInsets.all(20),
-                  child: Column(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
@@ -91,24 +110,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 16),
                       if (_cadastro) ...[
-                        TextField(
+                        TextFormField(
                           controller: _nome,
                           textInputAction: TextInputAction.next,
+                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Informe seu nome' : null,
                           decoration: const InputDecoration(labelText: 'Nome', prefixIcon: Icon(Icons.person_outline)),
                         ),
                         const SizedBox(height: 12),
                       ],
-                      TextField(
+                      TextFormField(
                         controller: _email,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: _validarEmail,
                         decoration: const InputDecoration(labelText: 'E-mail', prefixIcon: Icon(Icons.mail_outline)),
                       ),
                       const SizedBox(height: 12),
-                      TextField(
+                      TextFormField(
                         controller: _senha,
                         obscureText: true,
-                        onSubmitted: (_) => _submeter(),
+                        onFieldSubmitted: (_) => _submeter(),
+                        validator: _validarSenha,
                         decoration: const InputDecoration(labelText: 'Senha', prefixIcon: Icon(Icons.lock_outline)),
                       ),
                       const SizedBox(height: 20),
@@ -136,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Modo demonstracao: use qualquer e-mail e senha para entrar.',
+                                  'Modo demonstracao: use um e-mail valido e qualquer senha.',
                                   style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ),
@@ -144,6 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                     ],
+                  ),
                   ),
                 ),
               ),
@@ -301,32 +325,4 @@ class _OnboardingState extends State<_Onboarding> {
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: cor.onSurfaceVariant, height: 1.4)),
         ],
       ),
-    );
-  }
-
-  Widget _slideView(BuildContext context, _ItemSlide s) {
-    final cor = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 140,
-            height: 140,
-            decoration: BoxDecoration(color: cor.primaryContainer, shape: BoxShape.circle),
-            child: Icon(s.icone, size: 64, color: cor.onPrimaryContainer),
-          ),
-          const SizedBox(height: 36),
-          Text(s.titulo,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 14),
-          Text(s.descricao,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: cor.onSurfaceVariant, height: 1.4)),
-        ],
-      ),
-    );
-  }
-}
+    )
