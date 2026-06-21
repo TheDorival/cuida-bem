@@ -6,7 +6,7 @@ import '../widgets/estado_vazio.dart';
 import '../widgets/visao_estado.dart';
 import 'grupo_home_screen.dart';
 
-/// Lista de grupos do usuario e criacao de novo grupo (UC002).
+/// Tela inicial pos-login: saudacao e grupos de cuidado do usuario (UC002).
 class GruposScreen extends StatefulWidget {
   const GruposScreen({super.key});
   @override
@@ -51,55 +51,139 @@ class _GruposScreenState extends State<GruposScreen> {
   @override
   Widget build(BuildContext context) {
     final prov = context.watch<GrupoProvider>();
+    final nome = context.read<SessionProvider>().nomeUsuario.split(' ').first;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Meus grupos'),
-        actions: [
-          IconButton(onPressed: _sair, icon: const Icon(Icons.logout), tooltip: 'Sair'),
-        ],
-      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _novoGrupo,
         icon: const Icon(Icons.add),
         label: const Text('Novo grupo'),
       ),
-      body: prov.carregando
-          ? const Carregando()
-          : prov.erro != null
-              ? ErroView(mensagem: prov.erro!, aoTentar: () => prov.carregar())
-              : prov.grupos.isEmpty
-                  ? EstadoVazio(
-                      icone: Icons.groups,
-                      titulo: 'Nenhum grupo ainda',
-                      descricao: 'Crie um grupo de cuidado para organizar rotinas, diario e relatorios do idoso.',
-                      acaoRotulo: 'Criar grupo',
-                      aoTocar: _novoGrupo,
-                    )
-                  : RefreshIndicator(
-                      onRefresh: () => prov.carregar(),
-                      child: ListView(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        children: prov.grupos.map((g) {
-                          return Card(
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                                child: const Icon(Icons.elderly),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _cabecalho(context, nome, prov.grupos.length),
+            Expanded(
+              child: prov.carregando
+                  ? const Carregando()
+                  : prov.erro != null
+                      ? ErroView(mensagem: prov.erro!, aoTentar: () => prov.carregar())
+                      : prov.grupos.isEmpty
+                          ? EstadoVazio(
+                              icone: Icons.diversity_3,
+                              titulo: 'Nenhum grupo ainda',
+                              descricao: 'Crie um grupo de cuidado para organizar rotinas, diario e relatorios do idoso.',
+                              acaoRotulo: 'Criar grupo',
+                              aoTocar: _novoGrupo,
+                            )
+                          : RefreshIndicator(
+                              onRefresh: () => prov.carregar(),
+                              child: ListView(
+                                padding: const EdgeInsets.fromLTRB(0, 8, 0, 96),
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                                    child: Text('Seus grupos',
+                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                  ),
+                                  ...prov.grupos.map((g) => _cardGrupo(context, g)),
+                                ],
                               ),
-                              title: Text(g.nome, style: const TextStyle(fontWeight: FontWeight.w600)),
-                              subtitle: Text('Idoso: ${g.nomeIdoso}  -  ${g.membros.length} membro(s)'),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () {
-                                context.read<GrupoProvider>().selecionar(g);
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (_) => GrupoHomeScreen(grupo: g)),
-                                );
-                              },
                             ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _cabecalho(BuildContext context, String nome, int total) {
+    final cor = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 12, 22),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF2E7D6B), Color(0xFF49B194)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.volunteer_activism, color: Colors.white),
+              const SizedBox(width: 8),
+              const Text('CuidaBem', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+              const Spacer(),
+              IconButton(
+                onPressed: _sair,
+                icon: const Icon(Icons.logout, color: Colors.white),
+                tooltip: 'Sair',
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text('Ola, $nome!', style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 2),
+          Text(
+            total == 0 ? 'Vamos comecar criando um grupo de cuidado' : 'Voce acompanha $total grupo(s) de cuidado',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 15),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _cardGrupo(BuildContext context, dynamic g) {
+    final cor = Theme.of(context).colorScheme;
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          context.read<GrupoProvider>().selecionar(g);
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => GrupoHomeScreen(grupo: g)));
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: cor.primaryContainer,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(Icons.elderly, color: cor.onPrimaryContainer, size: 28),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(g.nome, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                    const SizedBox(height: 2),
+                    Text('Idoso: ${g.nomeIdoso}', style: TextStyle(color: cor.onSurfaceVariant)),
+                    const SizedBox(height: 6),
+                    Row(children: [
+                      Icon(Icons.groups, size: 16, color: cor.outline),
+                      const SizedBox(width: 4),
+                      Text('${g.membros.length} membro(s)',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cor.outline)),
+                    ]),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: cor.outline),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
