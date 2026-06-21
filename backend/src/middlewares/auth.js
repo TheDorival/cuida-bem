@@ -43,6 +43,10 @@ async function autenticar(req, _res, next) {
     return next();
   } catch (err) {
     if (err.status) return next(err);
+    if (!env.isProduction) {
+      // eslint-disable-next-line no-console
+      console.error('[auth] falha ao verificar token:', err && err.message ? err.message : err);
+    }
     return next(new UnauthorizedError('Falha na autenticacao'));
   }
 }
