@@ -4,8 +4,8 @@ import '../config/app_mode.dart';
 import '../providers/session_provider.dart';
 import '../widgets/logo.dart';
 
-/// Tela de acesso (UC001): apresentacao em slides (carrossel) e, ao concluir ou
-/// pular, o formulario de login/cadastro via Firebase Auth.
+/// Tela de acesso (UC001): apresentacao em carrossel (boas-vindas + funcionalidades)
+/// e, ao concluir ou pular, o formulario de login/cadastro via Firebase Auth.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
   @override
@@ -158,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-/// Modelo de um slide de apresentacao.
+/// Modelo de um slide de funcionalidade.
 class _ItemSlide {
   final IconData icone;
   final String titulo;
@@ -175,7 +175,8 @@ const _slides = <_ItemSlide>[
       'Gere relatorios em PDF da evolucao para compartilhar com profissionais de saude.'),
 ];
 
-/// Carrossel de apresentacao com indicador de progresso e botao pular.
+/// Carrossel de apresentacao (boas-vindas + funcionalidades) com indicador de
+/// progresso, botao pular e transicao em fade + zoom suave.
 class _Onboarding extends StatefulWidget {
   final VoidCallback aoConcluir;
   const _Onboarding({required this.aoConcluir});
@@ -187,6 +188,8 @@ class _OnboardingState extends State<_Onboarding> {
   final _controle = PageController();
   int _pagina = 0;
 
+  int get _total => _slides.length + 1; // boas-vindas + funcionalidades
+
   @override
   void dispose() {
     _controle.dispose();
@@ -194,17 +197,37 @@ class _OnboardingState extends State<_Onboarding> {
   }
 
   void _proximo() {
-    if (_pagina < _slides.length - 1) {
-      _controle.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+    if (_pagina < _total - 1) {
+      _controle.nextPage(duration: const Duration(milliseconds: 350), curve: Curves.easeOutCubic);
     } else {
       widget.aoConcluir();
     }
   }
 
+  // Aplica fade + leve zoom conforme a distancia do slide ao centro.
+  Widget _animado(int index, Widget filho) {
+    return AnimatedBuilder(
+      animation: _controle,
+      child: filho,
+      builder: (context, child) {
+        double delta;
+        if (_controle.hasClients && _controle.position.haveDimensions) {
+          delta = (_controle.page ?? _pagina.toDouble()) - index;
+        } else {
+          delta = (_pagina - index).toDouble();
+        }
+        final dist = delta.abs().clamp(0.0, 1.0);
+        final opacidade = (1 - dist).clamp(0.0, 1.0);
+        final escala = 0.82 + 0.18 * opacidade;
+        return Opacity(opacity: opacidade, child: Transform.scale(scale: escala, child: child));
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cor = Theme.of(context).colorScheme;
-    final ultima = _pagina == _slides.length - 1;
+    final ultima = _pagina == _total - 1;
     return Column(
       children: [
         Padding(
@@ -222,14 +245,17 @@ class _OnboardingState extends State<_Onboarding> {
         Expanded(
           child: PageView.builder(
             controller: _controle,
-            itemCount: _slides.length,
+            itemCount: _total,
             onPageChanged: (i) => setState(() => _pagina = i),
-            itemBuilder: (_, i) => _slideView(context, _slides[i]),
+            itemBuilder: (_, i) {
+              final conteudo = i == 0 ? _boasVindas(context) : _slideView(context, _slides[i - 1]);
+              return _animado(i, conteudo);
+            },
           ),
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(_slides.length, (i) {
+          children: List.generate(_total, (i) {
             final ativo = i == _pagina;
             return AnimatedContainer(
               duration: const Duration(milliseconds: 250),
@@ -254,6 +280,27 @@ class _OnboardingState extends State<_Onboarding> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _boasVindas(BuildContext context) {
+    final cor = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const LogoCuidaBem(tamanho: 104),
+          const SizedBox(height: 28),
+          Text('Bem-vindo!',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Text('Organize o cuidado do idoso em familia, num so lugar.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: cor.onSurfaceVariant, height: 1.4)),
+        ],
+      ),
     );
   }
 
