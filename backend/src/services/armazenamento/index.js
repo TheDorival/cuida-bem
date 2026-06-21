@@ -6,7 +6,7 @@ const env = require('../../config/env');
 let instancia = null;
 function getArmazenamentoService() {
   if (instancia) return instancia;
-  if (env.useFirebase) {
+  if (env.useFirebaseStorage) {
     const admin = require('firebase-admin');
     const { initFirebase } = require('../../config/firebase');
     initFirebase();

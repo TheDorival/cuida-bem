@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const IArmazenamentoService = require('./IArmazenamentoService');
+const env = require('../../config/env');
 
 const DIR_RELATORIOS = path.join(process.cwd(), 'reports');
 
@@ -16,7 +17,8 @@ class LocalArmazenamentoService extends IArmazenamentoService {
   async salvarPdf(nomeArquivo, buffer) {
     const caminho = path.join(DIR_RELATORIOS, nomeArquivo);
     await fs.promises.writeFile(caminho, buffer);
-    return { url: `/reports/${nomeArquivo}` };
+    const base = (env.appBaseUrl || '').replace(/\/$/, '');
+    return { url: `${base}/reports/${nomeArquivo}` };
   }
 }
 

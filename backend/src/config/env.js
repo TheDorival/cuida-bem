@@ -7,6 +7,9 @@ const env = {
   port: Number(process.env.PORT || 3000),
   // 'memory' (dev/testes) ou 'firebase' (producao)
   dataBackend: (process.env.DATA_BACKEND || 'memory').toLowerCase(),
+  // Armazenamento de PDFs independente do backend de dados: 'local' ou 'firebase'.
+  // Permite usar Firestore/Auth/FCM (gratuitos) sem o Storage (que exige Blaze).
+  storageBackend: (process.env.STORAGE_BACKEND || process.env.DATA_BACKEND || 'memory').toLowerCase(),
   appBaseUrl: process.env.APP_BASE_URL || 'http://localhost:3000',
   firebase: {
     projectId: process.env.FIREBASE_PROJECT_ID || '',
@@ -19,5 +22,6 @@ const env = {
 
 env.isProduction = env.nodeEnv === 'production';
 env.useFirebase = env.dataBackend === 'firebase';
+env.useFirebaseStorage = env.storageBackend === 'firebase';
 
 module.exports = env;

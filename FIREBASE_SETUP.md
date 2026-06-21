@@ -26,7 +26,15 @@ firebase login          # [você] abre o navegador e autentica
 3. No menu lateral, habilite:
    - **Build > Authentication** → aba *Sign-in method* → ative **E-mail/senha**.
    - **Build > Firestore Database** → *Criar banco* → modo de **produção** → região `southamerica-east1`.
-   - **Build > Storage** → *Começar* → modo de produção.
+>   - **Build > Storage** → *Começar*. **Atenção:** o Storage hoje exige o plano
+>     **Blaze** (pago, com franquia grátis de 1 GB). Você tem duas opções:
+>     - **(A) Ficar 100% grátis (recomendado para o projeto):** NÃO habilite o Storage.
+>       Mantenha Auth + Firestore + FCM no plano Spark (grátis) e use
+>       `STORAGE_BACKEND=local` no back-end — os PDFs ficam servidos pelo próprio
+>       servidor em `/reports`. Pule a configuração de Storage no passo 3.
+>     - **(B) Usar o Firebase Storage:** faça upgrade para o plano **Blaze**
+>       (Configurações > Uso e faturamento), defina um **orçamento/alerta** para não
+>       ser cobrado além da franquia, e habilite o Storage. Use `STORAGE_BACKEND=firebase`.
    - **Engage > Messaging** (Cloud Messaging) já vem habilitado.
 
 ---
@@ -56,7 +64,10 @@ Edite `firebase/.firebaserc` trocando `SUBSTITUIR-PELO-ID-DO-PROJETO` pelo seu i
 ```bash
 cd ../firebase
 firebase use SEU-PROJECT-ID
-firebase deploy --only firestore:rules,firestore:indexes,storage
+# Opcao A (sem Storage):
+firebase deploy --only firestore:rules,firestore:indexes
+# Opcao B (com Firebase Storage, plano Blaze):
+# firebase deploy --only firestore:rules,firestore:indexes,storage
 ```
 
 ---
@@ -88,6 +99,11 @@ APP_BASE_URL=https://SEU-DOMINIO
 FIREBASE_PROJECT_ID=SEU-PROJECT-ID
 FIREBASE_CLIENT_EMAIL=<client_email do JSON>
 FIREBASE_PRIVATE_KEY="<private_key do JSON, com os \n>"
+# Armazenamento dos PDFs:
+#   local   -> sem custo, servidos pelo back-end (opcao A)
+#   firebase-> Firebase Storage, exige plano Blaze (opcao B)
+STORAGE_BACKEND=local
+# Necessario apenas na opcao B:
 FIREBASE_STORAGE_BUCKET=SEU-PROJECT-ID.appspot.com
 
 JOB_SECRET=<gere um segredo forte>
@@ -169,7 +185,7 @@ flutter run --dart-define=API_BASE_URL=https://SEU-DOMINIO/api/v1
 
 ## 8. Checklist final
 
-- [ ] Projeto Firebase criado; Auth (E-mail/senha), Firestore, Storage e FCM habilitados
+- [ ] Projeto Firebase criado; Auth (E-mail/senha), Firestore e FCM habilitados (Storage so na opcao B)
 - [ ] `flutter pub get` rodado e `lib/firebase_options.dart` gerado pelo `flutterfire configure`
 - [ ] Regras e índices publicados (`firebase deploy`)
 - [ ] Chave de serviço gerada e `.env` do back-end preenchido
@@ -188,5 +204,6 @@ flutter run --dart-define=API_BASE_URL=https://SEU-DOMINIO/api/v1
   (`POST /api/v1/usuarios/me/fcm-token`), renovando-o automaticamente.
 - Back-end troca de memória para Firestore/Auth/FCM apenas com `DATA_BACKEND=firebase`,
   sem mudar código (interfaces de repositório e de notificação).
-- PDFs de relatório vão para o Firebase Storage com URL assinada.
+- PDFs de relatório vão para o Firebase Storage (Blaze) OU ficam no back-end
+  (`STORAGE_BACKEND=local`, gratuito) — escolha via `.env`, sem mudar código.
 - Regras de segurança negam acesso direto de clientes; tudo passa pelo back-end.
