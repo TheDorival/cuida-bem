@@ -6,6 +6,7 @@ import '../models/enums.dart';
 import '../providers/rotina_provider.dart';
 import '../widgets/estado_vazio.dart';
 import '../widgets/visao_estado.dart';
+import '../widgets/faixa_resumo.dart';
 
 /// Tela de Rotinas de Cuidado (UC003), com filtro por tipo (FA01).
 class RotinasScreen extends StatefulWidget {
@@ -96,6 +97,18 @@ class _RotinasScreenState extends State<RotinasScreen> {
       ),
       body: Column(
         children: [
+          FaixaResumo(itens: [
+            ItemResumo(
+                icone: Icons.schedule,
+                cor: const Color(0xFFE0852E),
+                valor: '${prov.rotinas.where((r) => r.status == "PENDENTE").length}',
+                rotulo: 'pendentes'),
+            ItemResumo(
+                icone: Icons.check_circle,
+                cor: const Color(0xFF2E9E5B),
+                valor: '${prov.rotinas.where((r) => r.status == "CONCLUIDA").length}',
+                rotulo: 'concluidas'),
+          ]),
           _filtroTipos(),
           Expanded(
             child: prov.carregando

@@ -6,6 +6,7 @@ import '../models/grupo.dart';
 import '../providers/relatorio_provider.dart';
 import '../widgets/estado_vazio.dart';
 import '../widgets/visao_estado.dart';
+import '../widgets/faixa_resumo.dart';
 
 /// Tela de Relatorios de Evolucao (UC007), com selecao de periodo e categorias (FA01).
 class RelatoriosScreen extends StatefulWidget {
@@ -107,8 +108,19 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
         icon: const Icon(Icons.add),
         label: const Text('Gerar'),
       ),
-      body: prov.carregando
-          ? const Carregando()
+      body: Column(
+        children: [
+          if (prov.relatorios.isNotEmpty)
+            FaixaResumo(itens: [
+              ItemResumo(
+                  icone: Icons.picture_as_pdf,
+                  cor: const Color(0xFF2E7D6B),
+                  valor: '${prov.relatorios.length}',
+                  rotulo: 'relatorios gerados'),
+            ]),
+          Expanded(
+            child: prov.carregando
+                ? const Carregando()
           : prov.erro != null
               ? ErroView(mensagem: prov.erro!, aoTentar: () => prov.carregar(widget.grupo.id))
               : prov.relatorios.isEmpty
@@ -138,6 +150,9 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
                         );
                       }).toList(),
                     ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -7,6 +7,7 @@ import '../models/enums.dart';
 import '../providers/diario_provider.dart';
 import '../widgets/estado_vazio.dart';
 import '../widgets/visao_estado.dart';
+import '../widgets/faixa_resumo.dart';
 
 /// Tela do Diario de Saude (UC004), com filtros por categoria e periodo (FA01/RF005).
 class DiarioScreen extends StatefulWidget {
@@ -119,6 +120,18 @@ class _DiarioScreenState extends State<DiarioScreen> {
       ),
       body: Column(
         children: [
+          FaixaResumo(itens: [
+            ItemResumo(
+                icone: Icons.menu_book,
+                cor: const Color(0xFF2E7D6B),
+                valor: '${prov.entradas.length}',
+                rotulo: 'registros'),
+            ItemResumo(
+                icone: Icons.priority_high,
+                cor: const Color(0xFFD9A407),
+                valor: '${prov.entradas.where((e) => e.importante).length}',
+                rotulo: 'importantes'),
+          ]),
           _filtros(),
           Expanded(
             child: prov.carregando
