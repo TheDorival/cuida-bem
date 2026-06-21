@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../services/api_client.dart';
 import '../services/fake_api_client.dart';
 import '../services/auth_service.dart';
+import '../services/notificacoes_push.dart';
 import '../services/grupo_service.dart';
 import '../services/rotina_service.dart';
 import '../services/diario_service.dart';
@@ -82,6 +83,20 @@ class SessionProvider extends ChangeNotifier {
     api.definirToken(token);
     _autenticado = token != null;
     notifyListeners();
+    if (_autenticado) _registrarPush();
+  }
+
+  // Registra o token FCM do dispositivo no backend (somente producao).
+  Future<void> _registrarPush() async {
+    if (demo) return;
+    try {
+      final tokenPush = await NotificacoesPush().obterToken();
+      if (tokenPush != null) {
+        await api.post('/usuarios/me/fcm-token', {'token': tokenPush});
+      }
+    } catch (_) {
+      // falha em push nao deve impedir o uso do app
+    }
   }
 
   String _traduzir(Object e) {
