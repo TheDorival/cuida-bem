@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/grupo.dart';
 import '../providers/session_provider.dart';
 import 'dashboard_screen.dart';
+import 'membros_screen.dart';
 import 'rotinas_screen.dart';
 import 'diario_screen.dart';
 import 'relatorios_screen.dart';
@@ -42,8 +43,14 @@ class _GrupoHomeScreenState extends State<GrupoHomeScreen> {
           PopupMenuButton<String>(
             onSelected: (v) {
               if (v == 'sair') _sair();
+              if (v == 'membros') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => MembrosScreen(grupoId: widget.grupo.id)),
+                );
+              }
             },
             itemBuilder: (_) => const [
+              PopupMenuItem(value: 'membros', child: Row(children: [Icon(Icons.groups), SizedBox(width: 8), Text('Membros')])),
               PopupMenuItem(value: 'sair', child: Row(children: [Icon(Icons.logout), SizedBox(width: 8), Text('Sair')])),
             ],
           ),

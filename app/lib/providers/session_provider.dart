@@ -23,6 +23,10 @@ class SessionProvider extends ChangeNotifier {
 
   bool _autenticado = false;
   bool get autenticado => _autenticado;
+
+  /// Id do usuario atual (uid do Firebase em producao; 'demo-user' no modo demo).
+  String? get usuarioId => demo ? 'demo-user' : auth.usuarioAtual?.uid;
+  String get nomeUsuario => demo ? 'Usuario (demo)' : (auth.usuarioAtual?.displayName ?? auth.usuarioAtual?.email ?? 'Usuario');
   String? erro;
 
   SessionProvider({this.demo = false, ApiClient? apiClient}) {
