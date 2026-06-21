@@ -16,6 +16,12 @@ class GrupoProvider extends ChangeNotifier {
     _inicio();
     try {
       grupos = await service.listar();
+      if (selecionado != null) {
+        selecionado = grupos.firstWhere(
+          (g) => g.id == selecionado!.id,
+          orElse: () => selecionado!,
+        );
+      }
     } catch (e) {
       erro = e.toString();
     } finally {
@@ -44,11 +50,25 @@ class GrupoProvider extends ChangeNotifier {
 
   Future<Map<String, dynamic>?> convidar(String grupoId, {String? email, String? perfil}) async {
     try {
-      return await service.convidar(grupoId, email: email, perfil: perfil);
+      final r = await service.convidar(grupoId, email: email, perfil: perfil);
+      await carregar();
+      return r;
     } catch (e) {
       erro = e.toString();
       notifyListeners();
       return null;
+    }
+  }
+
+  Future<bool> removerMembro(String grupoId, String usuarioId) async {
+    try {
+      await service.removerMembro(grupoId, usuarioId);
+      await carregar();
+      return true;
+    } catch (e) {
+      erro = e.toString();
+      notifyListeners();
+      return false;
     }
   }
 

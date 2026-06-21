@@ -164,5 +164,16 @@ class FakeApiClient extends ApiClient {
   Future<dynamic> patch(String path, [Map<String, dynamic>? body]) async => _resp({});
 
   @override
-  Future<dynamic> delete(String path) async => _resp({});
+  Future<dynamic> delete(String path) async {
+    final s = _segmentos(path);
+    // grupos/:id/membros/:usuarioId
+    if (s.length == 4 && s[0] == 'grupos' && s[2] == 'membros') {
+      final g = _grupos.firstWhere((x) => x['id'] == s[1], orElse: () => {});
+      if (g.isNotEmpty) {
+        (g['membros'] as List).removeWhere((m) => m['usuarioId'] == s[3]);
+      }
+      return _resp(g);
+    }
+    return _resp({});
+  }
 }
