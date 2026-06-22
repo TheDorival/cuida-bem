@@ -58,6 +58,38 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _recuperarSenha() async {
+    final email = TextEditingController(text: _email.text.trim());
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Recuperar senha'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Text('Informe seu e-mail. Enviaremos um link para redefinir a senha.'),
+          const SizedBox(height: 12),
+          TextField(
+            controller: email,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(labelText: 'E-mail', prefixIcon: Icon(Icons.mail_outline)),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Enviar')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final session = context.read<SessionProvider>();
+    final sucesso = await session.recuperarSenha(email.text.trim());
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(sucesso
+          ? 'Enviamos um link de redefinicao para o seu e-mail.'
+          : (session.erro ?? 'Nao foi possivel enviar o e-mail')),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -145,6 +177,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: _carregando ? null : () => setState(() => _cadastro = !_cadastro),
                         child: Text(_cadastro ? 'Ja tenho conta - entrar' : 'Nao tem conta? Cadastre-se'),
                       ),
+                      if (!_cadastro)
+                        TextButton(
+                          onPressed: _carregando ? null : _recuperarSenha,
+                          child: const Text('Esqueci minha senha'),
+                        ),
                       if (kDemoMode)
                         Container(
                           margin: const EdgeInsets.only(top: 4),
@@ -325,4 +362,32 @@ class _OnboardingState extends State<_Onboarding> {
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: cor.onSurfaceVariant, height: 1.4)),
         ],
       ),
-    )
+    );
+  }
+
+  Widget _slideView(BuildContext context, _ItemSlide s) {
+    final cor = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 140,
+            height: 140,
+            decoration: BoxDecoration(color: cor.primaryContainer, shape: BoxShape.circle),
+            child: Icon(s.icone, size: 64, color: cor.onPrimaryContainer),
+          ),
+          const SizedBox(height: 36),
+          Text(s.titulo,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 14),
+          Text(s.descricao,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: cor.onSurfaceVariant, height: 1.4)),
+        ],
+      ),
+    );
+  }
+}
