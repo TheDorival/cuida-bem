@@ -18,9 +18,8 @@ class GrupoService {
 
   // Passos 1-4: criar grupo. Apenas Cuidador Principal (pre-condicao).
   async criarGrupo(usuario, { nome, nomeIdoso }) {
-    if (usuario.perfil !== PerfilUsuario.CUIDADOR_PRINCIPAL) {
-      throw new ForbiddenError('Apenas o Cuidador Principal pode criar grupos (RN002)');
-    }
+    // Qualquer usuario autenticado pode criar um grupo e, ao cria-lo, torna-se o
+    // Cuidador Principal daquele grupo (papel por grupo - RN001 permite varios).
     const nomeOk = exigirTexto(nome, 'nome', 80);
     const idosoOk = exigirTexto(nomeIdoso, 'nomeIdoso', 100);
 
