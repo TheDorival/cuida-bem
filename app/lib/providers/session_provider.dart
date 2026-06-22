@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../services/api_client.dart';
+import '../services/fila_sincronizacao.dart';
 import '../services/fake_api_client.dart';
 import '../services/auth_service.dart';
 import '../services/notificacoes_push.dart';
@@ -23,6 +25,9 @@ class SessionProvider extends ChangeNotifier {
   AuthService? _auth;
   AuthService get auth => _auth ??= AuthService();
 
+  /// Fila de sincronizacao de escritas offline (FE02).
+  final FilaSincronizacao fila = FilaSincronizacao();
+
   bool _autenticado = false;
   bool _pushConfigurado = false;
   bool get autenticado => _autenticado;
@@ -30,16 +35,29 @@ class SessionProvider extends ChangeNotifier {
   /// Id do usuario atual (uid do Firebase em producao; 'demo-user' no modo demo).
   String? get usuarioId => demo ? 'demo-user' : auth.usuarioAtual?.uid;
   String get nomeUsuario => demo ? 'Usuario (demo)' : (auth.usuarioAtual?.displayName ?? auth.usuarioAtual?.email ?? 'Usuario');
+  String get emailUsuario => demo ? 'demo@cuidabem.app' : (auth.usuarioAtual?.email ?? '');
   String? erro;
 
   SessionProvider({this.demo = false, ApiClient? apiClient}) {
     api = apiClient ?? (demo ? FakeApiClient() : ApiClient());
+    if (!demo) api.fila = fila;
   }
 
   /// Restaura a sessao se ja houver usuario autenticado (app reaberto).
   Future<void> restaurar() async {
     if (demo) return;
+    await fila.carregar();
+    _ouvirConexao();
     if (auth.usuarioAtual != null) await _aplicarToken();
+    if (_autenticado) await fila.processar(api);
+  }
+
+  // Sincroniza a fila sempre que a conexao voltar.
+  void _ouvirConexao() {
+    Connectivity().onConnectivityChanged.listen((resultados) {
+      final online = resultados.any((r) => r != ConnectivityResult.none);
+      if (online && _autenticado) fila.processar(api);
+    });
   }
 
   Future<bool> entrar(String email, String senha) async {
@@ -57,6 +75,70 @@ class SessionProvider extends ChangeNotifier {
     api.definirToken(null);
     _autenticado = false;
     notifyListeners();
+  }
+
+  /// Envia e-mail de redefinicao de senha.
+  Future<bool> recuperarSenha(String email) async {
+    erro = null;
+    if (demo) return true;
+    try {
+      await auth.recuperarSenha(email);
+      return true;
+    } catch (e) {
+      erro = _traduzir(e);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Atualiza o nome de exibicao do usuario.
+  Future<bool> atualizarNome(String nome) async {
+    erro = null;
+    if (demo) return true;
+    try {
+      await auth.atualizarNome(nome);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      erro = _traduzir(e);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Atualiza a senha (pode exigir login recente).
+  Future<bool> atualizarSenha(String novaSenha) async {
+    erro = null;
+    if (demo) return true;
+    try {
+      await auth.atualizarSenha(novaSenha);
+      return true;
+    } catch (e) {
+      erro = _traduzir(e);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Exclui a conta do usuario (pode exigir login recente).
+  Future<bool> excluirConta() async {
+    erro = null;
+    if (demo) {
+      _autenticado = false;
+      notifyListeners();
+      return true;
+    }
+    try {
+      await auth.excluirConta();
+      api.definirToken(null);
+      _autenticado = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      erro = _traduzir(e);
+      notifyListeners();
+      return false;
+    }
   }
 
   bool _entrarDemo() {
@@ -119,4 +201,12 @@ class SessionProvider extends ChangeNotifier {
         case 'user-not-found':
           return 'Nao encontramos uma conta com esse e-mail';
         case 'wrong-password':
-        case 'i
+        case 'invalid-credential':
+          return 'E-mail ou senha incorretos';
+        case 'email-already-in-use':
+          return 'Este e-mail ja esta cadastrado. Tente entrar';
+        case 'weak-password':
+          return 'A senha deve ter ao menos 6 caracteres';
+        case 'missing-password':
+          return 'Informe a senha';
+        case 'requires-rec

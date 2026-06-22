@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/grupo_provider.dart';
 import '../providers/session_provider.dart';
+import '../providers/tema_provider.dart';
+import '../services/fila_sincronizacao.dart';
 import '../widgets/estado_vazio.dart';
 import '../widgets/visao_estado.dart';
 import '../widgets/banner_conexao.dart';
 import 'grupo_home_screen.dart';
+import 'perfil_screen.dart';
 
 /// Tela inicial pos-login: saudacao e grupos de cuidado do usuario (UC002).
 class GruposScreen extends StatefulWidget {
@@ -19,11 +22,6 @@ class _GruposScreenState extends State<GruposScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => context.read<GrupoProvider>().carregar());
-  }
-
-  Future<void> _sair() async {
-    await context.read<SessionProvider>().sair();
-    if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
   }
 
   Future<void> _entrarConvite() async {
@@ -91,6 +89,22 @@ class _GruposScreenState extends State<GruposScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _cabecalho(context, nome, prov.grupos.length),
+            if (context.watch<FilaSincronizacao>().quantidade > 0)
+              Container(
+                width: double.infinity,
+                color: Theme.of(context).colorScheme.tertiaryContainer,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(children: [
+                  Icon(Icons.sync, size: 18, color: Theme.of(context).colorScheme.onTertiaryContainer),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${context.watch<FilaSincronizacao>().quantidade} alteracao(oes) aguardando sincronizacao',
+                      style: TextStyle(color: Theme.of(context).colorScheme.onTertiaryContainer, fontSize: 13),
+                    ),
+                  ),
+                ]),
+              ),
             Expanded(
               child: prov.carregando
                   ? const Carregando()
@@ -148,14 +162,24 @@ class _GruposScreenState extends State<GruposScreen> {
               const Text('CuidaBem', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
               const Spacer(),
               IconButton(
+                onPressed: () => context.read<TemaProvider>().alternar(),
+                icon: Icon(
+                  context.watch<TemaProvider>().escuro ? Icons.light_mode : Icons.dark_mode,
+                  color: Colors.white,
+                ),
+                tooltip: 'Alternar tema claro/escuro',
+              ),
+              IconButton(
                 onPressed: _entrarConvite,
                 icon: const Icon(Icons.vpn_key, color: Colors.white),
                 tooltip: 'Entrar com convite',
               ),
               IconButton(
-                onPressed: _sair,
-                icon: const Icon(Icons.logout, color: Colors.white),
-                tooltip: 'Sair',
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const PerfilScreen()),
+                ),
+                icon: const Icon(Icons.account_circle, color: Colors.white),
+                tooltip: 'Minha conta',
               ),
             ],
           ),
@@ -196,18 +220,4 @@ class _GruposScreenState extends State<GruposScreen> {
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(g.nome, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                    const SizedBox(height: 2),
-                    Text('Idoso: ${g.nomeIdoso}', style: TextStyle(color: cor.onSurfaceVariant)),
-                    const SizedBox(height: 6),
-                    Row(children: [
-                      Icon(Icons.groups, size: 16, color: cor.outline),
-                      const SizedBox(width: 4),
-                      Text('${g.membros.length} membro(s)',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cor.outline)),
-                    ]),
-                  ],
-                ),
-         
+          
