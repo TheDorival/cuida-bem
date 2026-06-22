@@ -98,7 +98,7 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(r != null
           ? 'Relatorio v${r.versao} gerado (${r.totalEntradas} registros)'
-          : (context.read<RelatorioProvider>().erro ?? 'Falha ao gerar relatorio')),
+          : (context.read<RelatorioProvider>().erroGeracao ?? 'Falha ao gerar relatorio')),
     ));
   }
 

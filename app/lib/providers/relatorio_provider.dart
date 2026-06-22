@@ -9,7 +9,8 @@ class RelatorioProvider extends ChangeNotifier {
 
   List<Relatorio> relatorios = [];
   bool carregando = false;
-  String? erro;
+  String? erro; // falha ao CARREGAR a lista (conexao)
+  String? erroGeracao; // falha ao GERAR um relatorio (ex.: RN006)
 
   Future<void> carregar(String grupoId) async {
     carregando = true;
@@ -26,12 +27,15 @@ class RelatorioProvider extends ChangeNotifier {
   }
 
   Future<Relatorio?> gerar(String grupoId, DateTime inicio, DateTime fim, List<String> categorias) async {
+    erroGeracao = null;
     try {
       final r = await service.gerar(grupoId, inicio, fim, categorias);
       await carregar(grupoId);
       return r;
     } catch (e) {
-      erro = e.toString();
+      // Erro de geracao nao deve trocar a tela inteira por uma tela de erro;
+      // e exibido apenas como aviso (snackbar).
+      erroGeracao = e.toString();
       notifyListeners();
       return null;
     }
