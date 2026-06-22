@@ -94,11 +94,13 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFEAF3F0), Color(0xFFF6F8F7)],
+            colors: Theme.of(context).brightness == Brightness.dark
+                ? [Theme.of(context).colorScheme.surfaceContainerHigh, Theme.of(context).colorScheme.surface]
+                : const [Color(0xFFEAF3F0), Color(0xFFF6F8F7)],
           ),
         ),
         child: SafeArea(
