@@ -127,7 +127,10 @@ class _GruposScreenState extends State<GruposScreen> {
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
                                     child: Text('Seus grupos',
-                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(fontWeight: FontWeight.w700)),
                                   ),
                                   ...prov.grupos.map((g) => _cardGrupo(context, g)),
                                 ],
@@ -159,7 +162,8 @@ class _GruposScreenState extends State<GruposScreen> {
             children: [
               const Icon(Icons.volunteer_activism, color: Colors.white),
               const SizedBox(width: 8),
-              const Text('CuidaBem', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+              const Text('CuidaBem',
+                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
               const Spacer(),
               IconButton(
                 onPressed: () => context.read<TemaProvider>().alternar(),
@@ -184,7 +188,8 @@ class _GruposScreenState extends State<GruposScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          Text('Ola, $nome!', style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+          Text('Ola, $nome!',
+              style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
           const SizedBox(height: 2),
           Text(
             total == 0 ? 'Vamos comecar criando um grupo de cuidado' : 'Voce acompanha $total grupo(s) de cuidado',
@@ -220,4 +225,26 @@ class _GruposScreenState extends State<GruposScreen> {
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
-          
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(g.nome, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                    const SizedBox(height: 2),
+                    Text('Idoso: ${g.nomeIdoso}', style: TextStyle(color: cor.onSurfaceVariant)),
+                    const SizedBox(height: 6),
+                    Row(children: [
+                      Icon(Icons.groups, size: 16, color: cor.outline),
+                      const SizedBox(width: 4),
+                      Text('${g.membros.length} membro(s)',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cor.outline)),
+                    ]),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: cor.outline),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

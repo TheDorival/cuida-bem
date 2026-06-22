@@ -34,7 +34,8 @@ class SessionProvider extends ChangeNotifier {
 
   /// Id do usuario atual (uid do Firebase em producao; 'demo-user' no modo demo).
   String? get usuarioId => demo ? 'demo-user' : auth.usuarioAtual?.uid;
-  String get nomeUsuario => demo ? 'Usuario (demo)' : (auth.usuarioAtual?.displayName ?? auth.usuarioAtual?.email ?? 'Usuario');
+  String get nomeUsuario =>
+      demo ? 'Usuario (demo)' : (auth.usuarioAtual?.displayName ?? auth.usuarioAtual?.email ?? 'Usuario');
   String get emailUsuario => demo ? 'demo@cuidabem.app' : (auth.usuarioAtual?.email ?? '');
   String? erro;
 
@@ -209,4 +210,22 @@ class SessionProvider extends ChangeNotifier {
           return 'A senha deve ter ao menos 6 caracteres';
         case 'missing-password':
           return 'Informe a senha';
-        case 'requires-rec
+        case 'requires-recent-login':
+          return 'Por seguranca, saia e entre de novo para concluir esta acao';
+        case 'no-current-user':
+          return 'Sua sessao expirou. Entre novamente';
+        case 'user-disabled':
+          return 'Esta conta foi desativada';
+        case 'too-many-requests':
+          return 'Muitas tentativas. Aguarde um momento e tente de novo';
+        case 'network-request-failed':
+          return 'Sem conexao com a internet';
+        case 'operation-not-allowed':
+          return 'Login por e-mail/senha nao esta habilitado no servidor';
+        default:
+          return 'Nao foi possivel autenticar (${e.code})';
+      }
+    }
+    return 'Nao foi possivel autenticar. Tente novamente';
+  }
+}

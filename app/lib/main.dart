@@ -89,4 +89,6 @@ class _Gate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final autenticado = context.watch<SessionProvider>().autenticado;
-    return auten
+    return autenticado ? const GruposScreen() : const LoginScreen();
+  }
+}
