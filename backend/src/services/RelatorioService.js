@@ -26,6 +26,8 @@ class RelatorioService {
     const fim = exigirData(dados.periodoFim, 'periodoFim');
     // FE02: data inicial nao pode ser posterior a final.
     if (inicio > fim) throw new ValidationError('A data inicial nao pode ser posterior a final', { campo: 'periodo' });
+    // O periodo e inclusivo: considera o dia final inteiro (ate 23:59:59).
+    fim.setHours(23, 59, 59, 999);
 
     const categorias = Array.isArray(dados.categorias) ? dados.categorias.filter((c) => CategoriaDiario[c]) : [];
 

@@ -62,10 +62,15 @@ class DiarioService {
   // Passo 1 / FA01: consultar historico com filtros por data e categoria (RF005).
   async listarEntradas(usuario, grupoId, filtros = {}) {
     await this._exigirMembro(usuario, grupoId);
+    let dataFim = filtros.dataFim || null;
+    if (dataFim) {
+      dataFim = new Date(dataFim);
+      dataFim.setHours(23, 59, 59, 999); // periodo inclusivo do dia final
+    }
     const normalizado = {
       categorias: filtros.categorias && filtros.categorias.length ? filtros.categorias : null,
       dataInicio: filtros.dataInicio || null,
-      dataFim: filtros.dataFim || null,
+      dataFim,
     };
     return this.repos.entradasDiario.listarPorGrupo(grupoId, normalizado);
   }
