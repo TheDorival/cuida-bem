@@ -23,4 +23,11 @@ class RotinaService {
 
   Future<Rotina> concluir(String grupoId, String rotinaId) async {
     final data = await api.post('/grupos/$grupoId/rotinas/$rotinaId/concluir');
-    return Rotina.fromJson(data as Map<St
+    return Rotina.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<Rotina> desativar(String grupoId, String rotinaId) async {
+    final data = await api.post('/grupos/$grupoId/rotinas/$rotinaId/desativar');
+    return Rotina.fromJson(data as Map<String, dynamic>);
+  }
+}

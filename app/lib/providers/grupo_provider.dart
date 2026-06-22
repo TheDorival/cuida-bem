@@ -77,4 +77,21 @@ class GrupoProvider extends ChangeNotifier {
       await service.removerMembro(grupoId, usuarioId);
       await carregar();
       return true;
- 
+    } catch (e) {
+      erro = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  void _inicio() {
+    carregando = true;
+    erro = null;
+    notifyListeners();
+  }
+
+  void _fim() {
+    carregando = false;
+    notifyListeners();
+  }
+}

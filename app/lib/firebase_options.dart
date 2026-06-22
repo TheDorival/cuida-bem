@@ -44,4 +44,45 @@ class DefaultFirebaseOptions {
     apiKey: 'AIzaSyBmU_yLkqDzTr4dj4dcNAmbjHP_W9moVH8',
     appId: '1:807538238653:web:9177a692d2719c81d503d4',
     messagingSenderId: '807538238653',
-    projectId: 'cuid
+    projectId: 'cuida-bem-5dcab',
+    authDomain: 'cuida-bem-5dcab.firebaseapp.com',
+    storageBucket: 'cuida-bem-5dcab.firebasestorage.app',
+    measurementId: 'G-PKHZXTD49W',
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyDb1v2YRdR66_aUX0aa2alV0HppAx2VYzU',
+    appId: '1:807538238653:android:c59b98972d0bb64dd503d4',
+    messagingSenderId: '807538238653',
+    projectId: 'cuida-bem-5dcab',
+    storageBucket: 'cuida-bem-5dcab.firebasestorage.app',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyBRlmg8tjFleF2BKEe4YKYGCV1ck_oB9zA',
+    appId: '1:807538238653:ios:a8d5a1bd105b4448d503d4',
+    messagingSenderId: '807538238653',
+    projectId: 'cuida-bem-5dcab',
+    storageBucket: 'cuida-bem-5dcab.firebasestorage.app',
+    iosBundleId: 'com.example.cuidaBem',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyBRlmg8tjFleF2BKEe4YKYGCV1ck_oB9zA',
+    appId: '1:807538238653:ios:a8d5a1bd105b4448d503d4',
+    messagingSenderId: '807538238653',
+    projectId: 'cuida-bem-5dcab',
+    storageBucket: 'cuida-bem-5dcab.firebasestorage.app',
+    iosBundleId: 'com.example.cuidaBem',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyBmU_yLkqDzTr4dj4dcNAmbjHP_W9moVH8',
+    appId: '1:807538238653:web:c6856fbaedc1e48bd503d4',
+    messagingSenderId: '807538238653',
+    projectId: 'cuida-bem-5dcab',
+    authDomain: 'cuida-bem-5dcab.firebaseapp.com',
+    storageBucket: 'cuida-bem-5dcab.firebasestorage.app',
+    measurementId: 'G-WSN17YRBML',
+  );
+}
