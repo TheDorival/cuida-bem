@@ -1,32 +1,36 @@
 import 'package:flutter/material.dart';
 
-/// Tema visual do CuidaBem (View - MVC do cliente).
+/// Tema visual do CuidaBem (View - MVC do cliente), claro e escuro.
 /// Direcao acolhedora e acessivel: tipografia maior, botoes grandes, alto
 /// contraste e cantos arredondados - adequado a cuidadores e idosos.
 class CuidaBemTheme {
   static const Color semente = Color(0xFF2E7D6B); // verde-petroleo
 
-  static ThemeData get light {
-    final esquema = ColorScheme.fromSeed(seedColor: semente, brightness: Brightness.light);
+  static ThemeData get light => _construir(Brightness.light);
+  static ThemeData get dark => _construir(Brightness.dark);
+
+  static ThemeData _construir(Brightness brilho) {
+    final claro = brilho == Brightness.light;
+    final esquema = ColorScheme.fromSeed(seedColor: semente, brightness: brilho);
     final base = ThemeData(useMaterial3: true, colorScheme: esquema);
 
     return base.copyWith(
-      scaffoldBackgroundColor: const Color(0xFFF6F8F7),
+      scaffoldBackgroundColor: claro ? const Color(0xFFF6F8F7) : esquema.surface,
       visualDensity: VisualDensity.comfortable,
       appBarTheme: AppBarTheme(
         centerTitle: false,
-        backgroundColor: esquema.primary,
-        foregroundColor: esquema.onPrimary,
+        backgroundColor: claro ? esquema.primary : esquema.surfaceContainerHigh,
+        foregroundColor: claro ? esquema.onPrimary : esquema.onSurface,
         elevation: 0,
         titleTextStyle: TextStyle(
-          color: esquema.onPrimary,
+          color: claro ? esquema.onPrimary : esquema.onSurface,
           fontSize: 22,
           fontWeight: FontWeight.w600,
         ),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: Colors.white,
+        color: claro ? Colors.white : esquema.surfaceContainerHighest,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       ),
@@ -39,7 +43,7 @@ class CuidaBemTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: claro ? Colors.white : esquema.surfaceContainerHighest,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
@@ -49,7 +53,7 @@ class CuidaBemTheme {
       navigationBarTheme: NavigationBarThemeData(
         height: 68,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        backgroundColor: Colors.white,
+        backgroundColor: claro ? Colors.white : esquema.surfaceContainerHigh,
         indicatorColor: esquema.primaryContainer,
       ),
       snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),
