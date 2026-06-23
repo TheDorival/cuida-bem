@@ -11,8 +11,18 @@ class GrupoRepository extends IGrupoRepository {
     this.db = db;
   }
 
+  // Serializa o grupo para o Firestore incluindo os campos derivados usados nas
+  // consultas (array-contains): membrosIds e convitesTokens. Sem eles, o grupo
+  // existe no banco mas nao e encontrado por buscarPorMembro/buscarPorTokenConvite.
+  _serializar(grupo) {
+    const dados = { ...grupo };
+    dados.membrosIds = (grupo.membros || []).map((m) => m.usuarioId);
+    dados.convitesTokens = (grupo.convites || []).map((c) => c.token);
+    return dados;
+  }
+
   async criar(grupo) {
-    await this.db.collection(COL).doc(grupo.id).set({ ...grupo });
+    await this.db.collection(COL).doc(grupo.id).set(this._serializar(grupo));
     return grupo;
   }
 
@@ -22,7 +32,6 @@ class GrupoRepository extends IGrupoRepository {
   }
 
   async buscarPorMembro(usuarioId) {
-    // Firestore: membros sao armazenados tambem como array de ids para query.
     const snap = await this.db.collection(COL).where('membrosIds', 'array-contains', usuarioId).get();
     return snap.docs.map((d) => new Grupo(d.data()));
   }
@@ -33,10 +42,7 @@ class GrupoRepository extends IGrupoRepository {
   }
 
   async salvar(grupo) {
-    const dados = { ...grupo };
-    dados.membrosIds = grupo.membros.map((m) => m.usuarioId);
-    dados.convitesTokens = grupo.convites.map((c) => c.token);
-    await this.db.collection(COL).doc(grupo.id).set(dados, { merge: false });
+    await this.db.collection(COL).doc(grupo.id).set(this._serializar(grupo), { merge: false });
     return grupo;
   }
 }
