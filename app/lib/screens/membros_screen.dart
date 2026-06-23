@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../config/rotulos.dart';
 import '../models/grupo.dart';
@@ -75,7 +76,10 @@ class MembrosScreen extends StatelessWidget {
             TextField(
               controller: email,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(labelText: 'E-mail do convidado'),
+              decoration: const InputDecoration(
+                labelText: 'E-mail do convidado (opcional)',
+                helperText: 'Apenas para sua organizacao; o codigo e enviado por voce.',
+              ),
             ),
             const SizedBox(height: 12),
             DropdownButton<String>(
@@ -90,7 +94,7 @@ class MembrosScreen extends StatelessWidget {
           ]),
           actions: [
             TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Enviar convite')),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Gerar convite')),
           ],
         ),
       ),
@@ -100,18 +104,64 @@ class MembrosScreen extends StatelessWidget {
     final convite = await context.read<GrupoProvider>().convidar(grupo.id, email: email.text.trim(), perfil: perfil);
     if (!context.mounted) return;
     if (convite != null) {
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Convite gerado'),
-          content: SelectableText('Link do convite:\n${convite['link']}'),
-          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Fechar'))],
-        ),
-      );
+      _mostrarCodigo(context, (convite['token'] ?? '').toString(), perfis[perfil] ?? perfil);
     } else {
       final erro = context.read<GrupoProvider>().erro ?? 'Falha ao convidar';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(erro)));
     }
+  }
+
+  // Mostra o codigo do convite com botao de copiar e instrucoes de uso.
+  void _mostrarCodigo(BuildContext context, String codigo, String perfilRotulo) {
+    showDialog(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        title: const Text('Convite gerado'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Envie este codigo para a pessoa (WhatsApp, mensagem...). '
+              'Ela deve entrar na conta dela, tocar em "Entrar com convite" e colar o codigo.',
+            ),
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: Theme.of(dctx).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: SelectableText(
+                codigo,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Perfil: $perfilRotulo  •  valido por 7 dias',
+              style: Theme.of(dctx).textTheme.bodySmall,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dctx), child: const Text('Fechar')),
+          FilledButton.icon(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: codigo));
+              if (dctx.mounted) {
+                ScaffoldMessenger.of(dctx).showSnackBar(
+                  const SnackBar(content: Text('Codigo copiado')),
+                );
+              }
+            },
+            icon: const Icon(Icons.copy, size: 18),
+            label: const Text('Copiar codigo'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _remover(BuildContext context, Grupo grupo, Membro membro) async {
