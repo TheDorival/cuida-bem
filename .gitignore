@@ -5,3 +5,6 @@
 
 # Conteudo da wiki (publicado no repositorio separado .wiki)
 /wiki/
+
+# Cache local do firebase deploy
+.firebase/
