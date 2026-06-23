@@ -165,13 +165,18 @@ class _GruposScreenState extends State<GruposScreen> {
               const Text('CuidaBem',
                   style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
               const Spacer(),
-              IconButton(
-                onPressed: () => context.read<TemaProvider>().alternar(),
-                icon: Icon(
-                  context.watch<TemaProvider>().escuro ? Icons.light_mode : Icons.dark_mode,
-                  color: Colors.white,
-                ),
-                tooltip: 'Alternar tema claro/escuro',
+              PopupMenuButton<ThemeMode>(
+                tooltip: 'Tema',
+                icon: Icon(context.watch<TemaProvider>().icone, color: Colors.white),
+                onSelected: (m) => context.read<TemaProvider>().definir(m),
+                itemBuilder: (_) {
+                  final atual = context.read<TemaProvider>().modo;
+                  return [
+                    _itemTema(ThemeMode.light, Icons.light_mode, 'Claro', atual),
+                    _itemTema(ThemeMode.dark, Icons.dark_mode, 'Escuro', atual),
+                    _itemTema(ThemeMode.system, Icons.brightness_auto, 'De acordo com o sistema', atual),
+                  ];
+                },
               ),
               IconButton(
                 onPressed: _entrarConvite,
@@ -197,6 +202,18 @@ class _GruposScreenState extends State<GruposScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  PopupMenuItem<ThemeMode> _itemTema(ThemeMode modo, IconData icone, String texto, ThemeMode atual) {
+    return PopupMenuItem<ThemeMode>(
+      value: modo,
+      child: Row(children: [
+        Icon(icone, size: 20),
+        const SizedBox(width: 12),
+        Expanded(child: Text(texto)),
+        if (modo == atual) const Icon(Icons.check, size: 18),
+      ]),
     );
   }
 

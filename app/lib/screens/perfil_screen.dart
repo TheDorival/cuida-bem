@@ -59,11 +59,30 @@ class PerfilScreen extends StatelessWidget {
               title: const Text('Trocar senha'),
               onTap: () => _trocarSenha(context),
             ),
-          SwitchListTile(
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Text('Tema', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+          RadioListTile<ThemeMode>(
+            secondary: const Icon(Icons.light_mode),
+            title: const Text('Claro'),
+            value: ThemeMode.light,
+            groupValue: tema.modo,
+            onChanged: (m) => context.read<TemaProvider>().definir(m!),
+          ),
+          RadioListTile<ThemeMode>(
             secondary: const Icon(Icons.dark_mode),
-            title: const Text('Modo escuro'),
-            value: tema.escuro,
-            onChanged: (_) => context.read<TemaProvider>().alternar(),
+            title: const Text('Escuro'),
+            value: ThemeMode.dark,
+            groupValue: tema.modo,
+            onChanged: (m) => context.read<TemaProvider>().definir(m!),
+          ),
+          RadioListTile<ThemeMode>(
+            secondary: const Icon(Icons.brightness_auto),
+            title: const Text('De acordo com o sistema'),
+            value: ThemeMode.system,
+            groupValue: tema.modo,
+            onChanged: (m) => context.read<TemaProvider>().definir(m!),
           ),
           const Divider(),
           ListTile(

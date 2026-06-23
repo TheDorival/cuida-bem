@@ -1,15 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Controla o modo de tema (claro/escuro) com persistencia local.
-/// Padrao: tema claro. So fica escuro se o usuario escolher e a preferencia
-/// fica salva entre sessoes.
+/// Controla o modo de tema (claro/escuro/sistema) com persistencia local.
+/// Padrao: claro. O usuario pode escolher claro, escuro ou seguir o sistema,
+/// e a escolha fica salva entre sessoes.
 class TemaProvider extends ChangeNotifier {
   static const _chave = 'tema_modo';
   ThemeMode _modo = ThemeMode.light;
 
   ThemeMode get modo => _modo;
   bool get escuro => _modo == ThemeMode.dark;
+
+  // Icone que representa o modo atual (para o botao do cabecalho).
+  IconData get icone {
+    switch (_modo) {
+      case ThemeMode.light:
+        return Icons.light_mode;
+      case ThemeMode.dark:
+        return Icons.dark_mode;
+      case ThemeMode.system:
+        return Icons.brightness_auto;
+    }
+  }
 
   Future<void> carregar() async {
     final prefs = await SharedPreferences.getInstance();
@@ -32,8 +44,10 @@ class TemaProvider extends ChangeNotifier {
         return ThemeMode.dark;
       case 'light':
         return ThemeMode.light;
+      case 'system':
+        return ThemeMode.system;
       default:
-        // Sem preferencia salva (ou valor antigo 'system'): abre no claro.
+        // Sem preferencia salva: abre no claro.
         return ThemeMode.light;
     }
   }
